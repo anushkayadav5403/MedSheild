@@ -20,7 +20,9 @@ import {
   Info,
   ChevronRight,
   ArrowRight,
-  UserCheck
+  UserCheck,
+  TrendingUp,
+  Bot
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/symptoms")({
@@ -376,6 +378,4 @@ function SymptomsPage() {
     </div>
   );
 }
-
-import { TrendingUp } from "lucide-react";
 
