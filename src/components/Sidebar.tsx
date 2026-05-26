@@ -57,8 +57,8 @@ export function Sidebar() {
               to={it.to}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] font-bold transition-all relative animate-slide-up stagger-${(idx % 4) + 1} ${
                 active 
-                  ? "bg-teal/10 text-teal border border-teal/20 shadow-[0_0_20px_rgba(0,255,209,0.05)]" 
-                  : "text-white/60 hover:text-white hover:bg-white/5"
+                  ? "bg-white/10 text-white border border-white/20 shadow-lg" 
+                  : "text-white/70 hover:text-white hover:bg-white/5"
               }`}
             >
               <Icon className="h-5 w-5 shrink-0" />

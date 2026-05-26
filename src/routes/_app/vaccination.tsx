@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
-import { vaccines, hospitals } from "@/lib/mockData";
+import { vaccines, hospitals, stateVaccination } from "@/lib/mockData";
 import { fmtNum } from "@/lib/roleStore";
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, Clock, CheckCircle2, ChevronRight, Search, IdCard } from "lucide-react";
+import { Calendar, MapPin, Clock, CheckCircle2, ChevronRight, Search, IdCard, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { usePassportStore } from "@/lib/passportStore";
 import { fetchNationalStats, fetchStateVaccinationData, fetchCowinSessionsByPin, type NationalStats, type VaccinationCoverage } from "@/lib/realDataService";
@@ -20,8 +20,15 @@ function VaccinationPage() {
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [beneficiary, setBeneficiary] = useState({ name: "", age: "", idType: "Aadhaar", idNumber: "" });
   const [bookingStep, setBookingStep] = useState(1); // 1: Select Hospital, 2: Select Date/Slot, 3: Details, 4: Review, 5: Success
-  const [stats, setStats] = useState<NationalStats | null>(null);
-  const [stateData, setStateData] = useState<VaccinationCoverage[]>([]);
+  const [stats, setStats] = useState<NationalStats | null>({
+    confirmed: 44993480,
+    active: 284391,
+    recovered: 44463480,
+    deceased: 531910,
+    vaccinationPct: 74,
+    vaccinationDoses: 2206700000
+  });
+  const [stateData, setStateData] = useState<VaccinationCoverage[]>(stateVaccination);
   const [cowinSlots, setCowinSlots] = useState<any[]>([]);
   const [isSearchingSlots, setIsSearchingSlots] = useState(false);
 
@@ -30,7 +37,7 @@ function VaccinationPage() {
       const s = await fetchNationalStats();
       const v = await fetchStateVaccinationData();
       setStats(s);
-      setStateData(v);
+      if (v && v.length > 0) setStateData(v);
     };
     loadStats();
   }, []);
@@ -186,10 +193,10 @@ MEDSHIELD GLOBAL BIOSECURITY PROTOCOL 2026
   };
 
   return (
-    <div className="p-5 md:p-6 max-w-[1500px] mx-auto space-y-5 text-[#031B1D] animate-fade-in">
+    <div className="p-5 md:p-6 max-w-[1500px] mx-auto space-y-5 text-foreground animate-fade-in">
       <div className="animate-slide-up stagger-1">
         <h1 className="font-display font-extrabold text-2xl md:text-3xl">MedShield Vaccination Intelligence</h1>
-        <p className="text-sm opacity-60">CoWIN-integrated tracking · State-level breakdown · Booster planning</p>
+        <p className="text-sm text-foreground/60">CoWIN-integrated tracking · State-level breakdown · Booster planning</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5">
@@ -296,7 +303,7 @@ MEDSHIELD GLOBAL BIOSECURITY PROTOCOL 2026
                       <div className="font-bold text-white group-hover:text-teal transition-colors truncate pr-2">{h.name}</div>
                       <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-white/60 whitespace-nowrap">{h.type}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted mb-4">
+                    <div className="flex items-center gap-1.5 text-muted mb-4">
                       <MapPin className="h-3 w-3" />
                       {h.city}, {h.state}
                     </div>
@@ -505,45 +512,13 @@ MEDSHIELD GLOBAL BIOSECURITY PROTOCOL 2026
           )}
         </div>
 
-        <div className="panel animate-slide-up stagger-5">
-          <h2 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-mild" />
-            Eligibility Check
-          </h2>
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-mild-bg border border-mild/20">
-              <div className="text-xs font-bold text-mild uppercase tracking-widest mb-1">Status: Eligible</div>
-              <div className="text-sm text-white font-medium">You are eligible for the Booster Dose (Dose 3).</div>
+        <div className="space-y-5">
+          <div className="panel flex flex-col items-center text-center animate-slide-up stagger-5">
+            <div className="h-12 w-12 rounded-2xl bg-teal/10 grid place-items-center mb-4">
+              <ShieldCheck className="h-6 w-6 text-teal" />
             </div>
-            <div className="space-y-3">
-              {[
-                { label: "Age 18+", ok: true },
-                { label: "9 months since Dose 2", ok: true },
-                { label: "ID Verification", ok: true },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between text-xs">
-                  <span className="text-white/60">{item.label}</span>
-                  <CheckCircle2 className="h-4 w-4 text-mild" />
-                </div>
-              ))}
-            </div>
-            <div className="pt-4 border-t border-white/5">
-              <div className="text-[10px] text-muted uppercase tracking-widest mb-2 font-bold">Guidelines</div>
-              <ul className="text-[11px] text-white/50 space-y-2">
-                <li className="flex gap-2">
-                  <ChevronRight className="h-3 w-3 text-teal shrink-0" />
-                  Carry original Aadhaar/ID card.
-                </li>
-                <li className="flex gap-2">
-                  <ChevronRight className="h-3 w-3 text-teal shrink-0" />
-                  Arrive 15 mins before your slot.
-                </li>
-                <li className="flex gap-2">
-                  <ChevronRight className="h-3 w-3 text-teal shrink-0" />
-                  Do not visit if symptomatic.
-                </li>
-              </ul>
-            </div>
+            <h3 className="font-display font-bold text-base mb-2">Verified Centers Only</h3>
+            <p className="text-[11px] text-muted leading-relaxed">All centers listed are government-authorized and follow strict safety protocols.</p>
           </div>
         </div>
       </div>
@@ -572,13 +547,16 @@ MEDSHIELD GLOBAL BIOSECURITY PROTOCOL 2026
 
 function Mini({ label, value, c, index }: { label: string; value: string; c: string; index: number }) {
   return (
-    <div className={`panel border-white/10 relative overflow-hidden animate-slide-up stagger-${index}`}>
-      <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">{label}</div>
-      <div className="font-mono font-extrabold text-2xl mt-2 drop-shadow-sm" style={{ color: c }}>{value}</div>
-      <div className="absolute -bottom-6 -right-6 h-16 w-16 rounded-full blur-2xl" style={{ background: c, opacity: 0.15 }} />
+    <div className={`panel animate-slide-up stagger-${index}`}>
+      <div className="text-[9px] uppercase tracking-widest text-muted font-bold mb-1">{label}</div>
+      <div className="font-mono font-black text-xl text-white">{value}</div>
+      <div className="h-1 w-full rounded-full mt-3 overflow-hidden bg-white/5">
+        <div className="h-full rounded-full" style={{ width: "40%", background: c }} />
+      </div>
     </div>
   );
 }
+
 function Row({ k, v, c }: { k: string; v: string; c?: string }) {
   return (
     <div className="flex justify-between">

@@ -25,7 +25,7 @@ export default function Chapter1WhoYouAre() {
               value={passportData.fullName || ''}
               onChange={(e) => updatePassportData({ fullName: e.target.value })}
               placeholder="John Michael Doe"
-              className="input-base w-full bg-black/20"
+              className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
             />
           </div>
 
@@ -35,7 +35,7 @@ export default function Chapter1WhoYouAre() {
               type="date"
               value={passportData.dateOfBirth || ''}
               onChange={(e) => updatePassportData({ dateOfBirth: e.target.value })}
-              className="input-base w-full font-mono bg-black/20"
+              className="input-base w-full font-mono bg-white/5 border-white/10 text-white"
             />
           </div>
 
@@ -48,8 +48,8 @@ export default function Chapter1WhoYouAre() {
                   onClick={() => updatePassportData({ gender: g })}
                   className={`py-2 rounded-md text-xs font-bold capitalize transition-all ${
                     passportData.gender === g 
-                      ? 'bg-teal text-white border border-teal' 
-                      : 'bg-input-bg text-mid border border-border'
+                      ? 'bg-teal text-[#031B1D] border border-teal shadow-[0_0_15px_rgba(0,255,209,0.3)]' 
+                      : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'
                   }`}
                 >
                   {g}
@@ -66,7 +66,7 @@ export default function Chapter1WhoYouAre() {
                 value={passportData.height || ''}
                 onChange={(e) => updatePassportData({ height: e.target.value })}
                 placeholder="175"
-                className="input-base w-full font-mono bg-black/20"
+                className="input-base w-full font-mono bg-white/5 border-white/10 text-white placeholder:text-white/30"
               />
             </div>
             <div className="space-y-1.5">
@@ -76,7 +76,7 @@ export default function Chapter1WhoYouAre() {
                 value={passportData.weight || ''}
                 onChange={(e) => updatePassportData({ weight: e.target.value })}
                 placeholder="70"
-                className="input-base w-full font-mono bg-black/20"
+                className="input-base w-full font-mono bg-white/5 border-white/10 text-white placeholder:text-white/30"
               />
             </div>
           </div>

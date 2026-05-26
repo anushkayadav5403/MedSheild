@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useEffect, useState } from "react";
 import { useCountUp, fmtNum, useRole } from "@/lib/roleStore";
-import { alerts, myPassport, cityOutbreaks } from "@/lib/mockData";
+import { alerts, myPassport, cityOutbreaks, nationalStats as mockStats } from "@/lib/mockData";
 import { OutbreakMap } from "@/components/OutbreakMap";
+import { FacilityMap } from "@/components/FacilityMap";
 import { CaseTrendChart } from "@/components/CaseTrendChart";
 import { ForecastChart } from "@/components/ForecastChart";
 import { CollapseRiskWatch } from "@/components/CollapseRiskWatch";
@@ -76,7 +77,14 @@ function ResourceBar({ label, pct, icon: Icon }: { label: string; pct: number; i
 function Dashboard() {
   const [role] = useRole();
   const [isMounted, setIsMounted] = useState(false);
-  const [stats, setStats] = useState<NationalStats | null>(null);
+  const [stats, setStats] = useState<NationalStats | null>({
+    confirmed: 44993480, // Realistic Indian total
+    active: mockStats.activeCases,
+    recovered: 44463480,
+    deceased: 531910,
+    vaccinationPct: mockStats.vaccinationPct,
+    vaccinationDoses: mockStats.vaccinationDoses
+  });
 
   useEffect(() => {
     setIsMounted(true);
@@ -109,15 +117,15 @@ function Dashboard() {
   }, [isMounted]);
 
   return (
-    <div className="min-h-screen text-[#031B1D] animate-fade-in">
+    <div className="min-h-screen text-foreground animate-fade-in">
       <div className="p-8 space-y-8 max-w-[1600px] mx-auto">
         <div className="flex items-end justify-between animate-slide-up stagger-1">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-red-500 font-bold mb-1">
               Role: {role.toUpperCase()}
             </div>
-            <h1 className="font-display font-extrabold text-4xl tracking-tight text-[#031B1D]">MedShield Command</h1>
-            <p className="text-sm text-[#031B1D]/50 mt-1 font-medium italic">Real-time pandemic intelligence · {today}</p>
+            <h1 className="font-display font-extrabold text-4xl tracking-tight text-foreground">MedShield Command</h1>
+            <p className="text-sm text-foreground/50 mt-1 font-medium italic">Real-time pandemic intelligence · {today}</p>
           </div>
           <div className="flex items-center gap-2 text-red-500">
              <Activity className="h-4 w-4 animate-pulse" />
@@ -138,8 +146,8 @@ function Dashboard() {
           <div className="panel lg:col-span-2 p-0 overflow-hidden relative">
             <div className="p-6 flex items-center justify-between border-b border-white/5">
               <div>
-                <div className="font-display font-bold text-xl text-white">Outbreak Simulation Map</div>
-                <div className="text-[10px] text-white/40 mt-0.5 uppercase tracking-[0.2em] font-bold">Live district-level surveillance</div>
+                <div className="font-display font-bold text-xl text-white">Pandemic Outbreak Map</div>
+                <div className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1">Live Simulation Mode</div>
               </div>
               <div className="flex items-center gap-3">
                  <div className={`flex items-center gap-2 py-1 px-3 rounded-lg ${criticalZonesCount > 0 ? 'bg-red-500/20 border border-red-500/20' : 'bg-green-500/20 border border-green-500/20'}`}>
@@ -149,12 +157,12 @@ function Dashboard() {
                     </span>
                  </div>
                  <Link to="/map" className="text-[10px] font-bold text-green-500 flex items-center gap-1 hover:underline uppercase tracking-widest">
-                   Full Map <ArrowRight className="h-3 w-3" />
+                   Full Analysis <ArrowRight className="h-3 w-3" />
                  </Link>
               </div>
             </div>
-            <div className="p-4 bg-[#011415]">
-              <OutbreakMap height={380} />
+            <div className="p-4 bg-white/5">
+              <OutbreakMap height={400} />
             </div>
           </div>
 

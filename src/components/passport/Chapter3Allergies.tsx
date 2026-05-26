@@ -62,8 +62,8 @@ export default function Chapter3Allergies() {
               onClick={() => setCategory(cat)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 category === cat 
-                  ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50' 
-                  : 'bg-input-bg text-mid border border-border'
+                  ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]' 
+                  : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'
               }`}
             >
               {cat}
@@ -90,7 +90,7 @@ export default function Chapter3Allergies() {
             value={customAllergy}
             onChange={(e) => setCustomAllergy(e.target.value)}
             placeholder="Add custom allergy..."
-            className="input-base flex-1"
+            className="input-base flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && customAllergy) {
                 addAllergy(customAllergy);
@@ -140,8 +140,8 @@ export default function Chapter3Allergies() {
                     onClick={() => updateDetail(index, { severity: s })}
                     className={`py-2 rounded-md text-xs font-bold transition-all ${
                       detail.severity === s 
-                        ? (s === 'Severe' ? 'bg-red text-white' : 'bg-white/20 text-white') 
-                        : 'bg-input-bg text-mid'
+                        ? (s === 'Severe' ? 'bg-red text-white shadow-[0_0_15px_rgba(232,32,42,0.4)]' : 'bg-white/20 text-white') 
+                        : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'
                     }`}
                     style={detail.severity === s && s === 'Severe' ? { background: 'var(--red)' } : {}}
                   >
@@ -157,7 +157,7 @@ export default function Chapter3Allergies() {
                 value={detail.reaction || ''}
                 onChange={(e) => updateDetail(index, { reaction: e.target.value })}
                 placeholder="Describe the reaction (optional)..."
-                className="input-base w-full bg-black/20"
+                className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
               />
             </div>
 
@@ -167,7 +167,7 @@ export default function Chapter3Allergies() {
                   type="checkbox"
                   checked={detail.hasEpiPen}
                   onChange={(e) => updateDetail(index, { hasEpiPen: e.target.checked })}
-                  className="peer h-5 w-5 appearance-none rounded border border-border bg-input-bg checked:bg-teal checked:border-teal transition-all"
+                  className="peer h-5 w-5 appearance-none rounded border border-white/20 bg-white/5 checked:bg-teal checked:border-teal transition-all shadow-inner"
                 />
                 <Plus className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
               </div>

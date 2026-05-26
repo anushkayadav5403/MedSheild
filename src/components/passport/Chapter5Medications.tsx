@@ -47,7 +47,7 @@ export default function Chapter5Medications() {
             value={medName}
             onChange={(e) => setMedName(e.target.value)}
             placeholder="Medication name..."
-            className="input-base flex-1"
+            className="input-base flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && medName) {
                 addMedication(medName);
@@ -91,7 +91,7 @@ export default function Chapter5Medications() {
                   value={med.dosage}
                   onChange={(e) => updateMedication(index, { dosage: e.target.value })}
                   placeholder="Dose (e.g., 500mg)"
-                  className="input-base w-full bg-black/20"
+                  className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
                 />
               </div>
               <div className="space-y-1.5">
@@ -100,7 +100,7 @@ export default function Chapter5Medications() {
                   value={med.frequency}
                   onChange={(e) => updateMedication(index, { frequency: e.target.value })}
                   placeholder="Frequency (e.g., 2x daily)"
-                  className="input-base w-full bg-black/20"
+                  className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
                 />
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function Chapter5Medications() {
                 value={med.reason || ''}
                 onChange={(e) => updateMedication(index, { reason: e.target.value })}
                 placeholder="Reason for taking (optional)"
-                className="input-base w-full bg-black/20"
+                className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
               />
             </div>
           </div>

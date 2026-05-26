@@ -68,14 +68,14 @@ export default function Chapter6EmergencyContacts() {
                 value={contact.name}
                 onChange={(e) => updateContact(index, { name: e.target.value })}
                 placeholder="Name"
-                className="input-base w-full bg-black/20"
+                className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
               />
               <input
                 type="text"
                 value={contact.relationship}
                 onChange={(e) => updateContact(index, { relationship: e.target.value })}
                 placeholder="Relationship (e.g., Spouse, Parent)"
-                className="input-base w-full bg-black/20"
+                className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
@@ -83,14 +83,14 @@ export default function Chapter6EmergencyContacts() {
                   value={contact.phone}
                   onChange={(e) => updateContact(index, { phone: e.target.value })}
                   placeholder="Phone number"
-                  className="input-base w-full bg-black/20"
+                  className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
                 />
                 <input
                   type="tel"
                   value={contact.secondaryPhone || ''}
                   onChange={(e) => updateContact(index, { secondaryPhone: e.target.value })}
                   placeholder="Secondary phone"
-                  className="input-base w-full bg-black/20"
+                  className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
                 />
               </div>
 
@@ -100,7 +100,7 @@ export default function Chapter6EmergencyContacts() {
                     type="checkbox"
                     checked={contact.canMakeMedicalDecisions}
                     onChange={(e) => updateContact(index, { canMakeMedicalDecisions: e.target.checked })}
-                    className="peer h-5 w-5 appearance-none rounded border border-border bg-input-bg checked:bg-blue-400 checked:border-blue-400 transition-all"
+                    className="peer h-5 w-5 appearance-none rounded border border-white/20 bg-white/5 checked:bg-blue-400 checked:border-blue-400 transition-all shadow-inner"
                   />
                   <Plus className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                 </div>

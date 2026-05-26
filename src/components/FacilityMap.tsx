@@ -1,285 +1,433 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { HospitalDB } from "@/lib/hospitalDB";
+import { fetchRealWorldFacilities } from "@/lib/hospitalDB";
+import { Search, MapPin, Filter, Clock, Navigation, AlertCircle, Loader2, Phone, X, Globe } from "lucide-react";
 
 interface FacilityMapProps {
-  facilities: HospitalDB[];
-  userLocation: { lat: number; lng: number; name: string };
+  initialFacilities?: HospitalDB[];
+  initialUserLocation?: { lat: number; lng: number; name: string };
   height?: number;
+  radius?: number;
+  onLocationChange?: (lat: number, lng: number) => void;
+  isOffline?: boolean;
 }
 
 const TYPE_CONFIG = {
-  HOSPITAL: { color: "#d93025", border: "#b31412", label: "Hospital" },
-  CLINIC:   { color: "#1a73e8", border: "#1557b0", label: "Clinic"   },
-  PHARMACY: { color: "#188038", border: "#0d652d", label: "Pharmacy" },
+  HOSPITAL: { color: "#FF3B3B", label: "Hospital", icon: "🏥" }, 
+  CLINIC:   { color: "#FF9F1C", label: "Clinic",   icon: "🩺" }, 
+  PHARMACY: { color: "#00FF88", label: "Pharmacy", icon: "💊" }, 
 };
 
-// Clean SVG icons (no emoji) — white on colored background
-const ICONS = {
-  HOSPITAL: `<svg width="14" height="14" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c.55 0 1 .45 1 1v3h3c.55 0 1 .45 1 1s-.45 1-1 1h-3v3c0 .55-.45 1-1 1s-1-.45-1-1v-3H8c-.55 0-1-.45-1-1s.45-1 1-1h3V7c0-.55.45-1 1-1z"/>
-  </svg>`,
-  CLINIC: `<svg width="14" height="14" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-  </svg>`,
-  PHARMACY: `<svg width="14" height="14" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.53 15.47 0 12.36 0c-1.55 0-2.94.64-3.96 1.64L6 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-8-4c1.29 0 2.36 1.07 2.36 2.36 0 .65-.26 1.24-.68 1.68L12 8l-1.68-1.96c-.42-.44-.68-1.03-.68-1.68C9.64 3.07 10.71 2 12 2zm1 13h-2v-2H9v-2h2v-2h2v2h2v2h-2v2z"/>
-  </svg>`,
-};
-
-export function FacilityMap({ facilities, userLocation, height = 500 }: FacilityMapProps) {
+export function FacilityMap({ 
+  initialFacilities = [], 
+  initialUserLocation, 
+  height = 500, 
+  radius: initialRadius = 5,
+  isOffline = false
+}: FacilityMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const LRef = useRef<any>(null);
 
+  // --- State ---
+  const [userLocation, setUserLocation] = useState(initialUserLocation || { lat: 12.9716, lng: 77.5946, name: "Bengaluru" });
+  const [facilities, setFacilities] = useState<HospitalDB[]>(initialFacilities);
+  const [radius, setRadius] = useState(initialRadius);
+  const [loading, setLoading] = useState(false);
+  const [permissionStatus, setPermissionStatus] = useState<"prompt" | "granted" | "denied">("prompt");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilters, setActiveFilters] = useState({
+    categories: ["HOSPITAL", "CLINIC", "PHARMACY"],
+    only24h: false
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // --- Sync with Props ---
+  useEffect(() => {
+    if (initialFacilities.length > 0) setFacilities(initialFacilities);
+  }, [initialFacilities]);
+
+  useEffect(() => {
+    if (initialUserLocation) setUserLocation(initialUserLocation);
+  }, [initialUserLocation]);
+
+  useEffect(() => {
+    setRadius(initialRadius);
+  }, [initialRadius]);
+
+  // --- Location Permissions ---
+  useEffect(() => {
+    if (typeof window === "undefined" || !navigator.permissions) return;
+    
+    navigator.permissions.query({ name: "geolocation" as any }).then(status => {
+      setPermissionStatus(status.state as any);
+      status.onchange = () => setPermissionStatus(status.state as any);
+    });
+  }, []);
+
+  const requestLocation = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported");
+      setLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        // Reverse geocode to get name
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
+          const data = await res.json();
+          const name = data.address.city || data.address.town || data.address.state || "Current Location";
+          setUserLocation({ lat: latitude, lng: longitude, name });
+          setPermissionStatus("granted");
+          discoverFacilities(latitude, longitude, radius);
+        } catch {
+          setUserLocation({ lat: latitude, lng: longitude, name: "Current Location" });
+          setPermissionStatus("granted");
+          discoverFacilities(latitude, longitude, radius);
+        }
+      },
+      (err) => {
+        setError(err.code === 1 ? "Location access denied" : "Failed to detect location");
+        setPermissionStatus("denied");
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [radius]);
+
+  const discoverFacilities = async (lat: number, lng: number, r: number) => {
+    setLoading(true);
+    try {
+      const data = await fetchRealWorldFacilities(lat, lng, r);
+      setFacilities(data);
+      
+      // Store for offline if needed
+      if (!isOffline) {
+        localStorage.setItem("medshield.last_facilities", JSON.stringify(data));
+        localStorage.setItem("medshield.last_location", JSON.stringify({ lat, lng, name: userLocation.name }));
+        localStorage.setItem("medshield.last_fetch_time", new Date().toISOString());
+      }
+    } catch (err) {
+      setError("Failed to fetch nearby facilities");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGlobalSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`);
+      const data = await res.json();
+      if (data && data[0]) {
+        const { lat, lon, display_name } = data[0];
+        const newLat = parseFloat(lat);
+        const newLng = parseFloat(lon);
+        setUserLocation({ lat: newLat, lng: newLng, name: display_name.split(",")[0] });
+        discoverFacilities(newLat, newLng, radius);
+        setSearchQuery("");
+      } else {
+        setError("Location not found");
+      }
+    } catch (err) {
+      setError("Search failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Leaflet Map Sync ---
   useEffect(() => {
     if (!mapRef.current || typeof window === "undefined") return;
 
     import("leaflet").then((L) => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
+      LRef.current = L;
+      if (!mapInstanceRef.current) {
+        const map = L.map(mapRef.current!, {
+          center: [userLocation.lat, userLocation.lng],
+          zoom: 14,
+          zoomControl: false,
+          attributionControl: false,
+        });
+
+        mapInstanceRef.current = map;
+
+        L.tileLayer(
+          "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+          { subdomains: "abcd", maxZoom: 20 }
+        ).addTo(map);
+
+        L.control.zoom({ position: "topright" }).addTo(map);
       }
 
-      const map = L.map(mapRef.current!, {
-        center: [userLocation.lat, userLocation.lng],
-        zoom: 14,
-        zoomControl: false,
-        attributionControl: false,
-      });
+      const map = mapInstanceRef.current;
+      // Only setView if location actually changed significantly or it's the first load
+      map.setView([userLocation.lat, userLocation.lng], map.getZoom());
 
-      mapInstanceRef.current = map;
+      // Clear old markers
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
 
-      // Google Maps Voyager tiles — clean, professional
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        { subdomains: "abcd", maxZoom: 20 }
-      ).addTo(map);
-
-      L.control.zoom({ position: "topright" }).addTo(map);
-      L.control.attribution({ position: "bottomright", prefix: false })
-        .addAttribution('© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>')
-        .addTo(map);
-
-      // ── User location — clean Google Maps blue dot ──
+      // User Marker
       const userIcon = L.divIcon({
         className: "",
         html: `
-          <div style="position:relative;width:20px;height:20px;">
-            <div style="
-              position:absolute;top:50%;left:50%;
-              transform:translate(-50%,-50%);
-              width:40px;height:40px;border-radius:50%;
-              background:rgba(26,115,232,0.15);
-              animation:loc-pulse 2s ease-out infinite;
-            "></div>
-            <div style="
-              position:absolute;top:50%;left:50%;
-              transform:translate(-50%,-50%);
-              width:20px;height:20px;border-radius:50%;
-              background:#1a73e8;
-              border:3px solid white;
-              box-shadow:0 2px 6px rgba(26,115,232,0.6);
-            "></div>
+          <div class="relative w-6 h-6">
+            <div class="absolute inset-0 bg-[#00C2FF]/30 rounded-full animate-ping"></div>
+            <div class="absolute inset-0 bg-[#00C2FF] border-2 border-white rounded-full shadow-[0_0_20px_#00C2FF]"></div>
           </div>
-          <style>
-            @keyframes loc-pulse{0%{transform:translate(-50%,-50%) scale(1);opacity:.6}70%{transform:translate(-50%,-50%) scale(2.5);opacity:0}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
-          </style>
         `,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
       });
 
-      L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, zIndexOffset: 2000 })
+      const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, zIndexOffset: 2000 })
         .addTo(map)
         .bindPopup(`
-          <div style="font-family:system-ui;padding:2px 0">
-            <b style="font-size:13px;color:#202124">Your Location</b>
-            <div style="font-size:11px;color:#5f6368;margin-top:2px">${userLocation.name}</div>
+          <div class="p-2 text-[#031B1D]">
+            <b class="text-sm">Intelligence Origin</b>
+            <div class="text-[10px] opacity-60 mt-1">${userLocation.name}</div>
           </div>
-        `, { className: "gm-popup" });
+        `);
+      markersRef.current.push(userMarker);
 
-      // ── Facility markers — radium glowing pulsing dots ──
-      facilities.forEach((f) => {
-        if (!f.lat || !f.lng) return;
-        const cfg = TYPE_CONFIG[f.type] || TYPE_CONFIG.HOSPITAL;
-        const dist = f.distance != null ? `${f.distance.toFixed(1)} km` : "";
+      // Radius Circle
+      const circle = L.circle([userLocation.lat, userLocation.lng], {
+        radius: radius * 1000,
+        color: "#00C2FF",
+        fillColor: "#00C2FF",
+        fillOpacity: 0.03,
+        weight: 1,
+        dashArray: "5, 5"
+      }).addTo(map);
+      markersRef.current.push(circle);
 
-        const markerIcon = L.divIcon({
-          className: "",
-          html: `
-            <div style="position:relative;width:20px;height:20px;cursor:pointer;">
-              <!-- Outer pulse ring -->
-              <div style="
-                position:absolute;top:50%;left:50%;
-                transform:translate(-50%,-50%);
-                width:36px;height:36px;border-radius:50%;
-                background:${cfg.color}30;
-                animation:radium-pulse 2.2s ease-out infinite;
-              "></div>
-              <!-- Middle ring -->
-              <div style="
-                position:absolute;top:50%;left:50%;
-                transform:translate(-50%,-50%);
-                width:24px;height:24px;border-radius:50%;
-                background:${cfg.color}50;
-                animation:radium-pulse 2.2s ease-out infinite 0.3s;
-              "></div>
-              <!-- Core dot -->
-              <div style="
-                position:absolute;top:50%;left:50%;
-                transform:translate(-50%,-50%);
-                width:14px;height:14px;border-radius:50%;
-                background:${cfg.color};
-                border:2.5px solid white;
-                box-shadow:0 0 8px ${cfg.color}, 0 0 16px ${cfg.color}80, 0 2px 4px rgba(0,0,0,0.3);
-              "></div>
-            </div>
-            <style>
-              @keyframes radium-pulse {
-                0%{transform:translate(-50%,-50%) scale(1);opacity:0.8}
-                70%{transform:translate(-50%,-50%) scale(2.2);opacity:0}
-                100%{transform:translate(-50%,-50%) scale(2.2);opacity:0}
-              }
-            </style>
-          `,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10],
-          popupAnchor: [0, -14],
+      // Filtered Facility Markers
+      facilities
+        .filter(f => activeFilters.categories.includes(f.type))
+        .filter(f => !activeFilters.only24h || f.open24hr)
+        .forEach((f) => {
+          const cfg = TYPE_CONFIG[f.type];
+          const markerIcon = L.divIcon({
+            className: "",
+            html: `
+              <div class="relative w-5 h-5 cursor-pointer group">
+                <div class="absolute inset-0 rounded-full animate-pulse opacity-40" style="background: ${cfg.color}"></div>
+                <div class="absolute inset-0 rounded-full border-2 border-white shadow-[0_0_15px_${cfg.color}] flex items-center justify-center text-[10px]" style="background: ${cfg.color}">
+                  ${cfg.icon}
+                </div>
+              </div>
+            `,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10],
+          });
+
+          const marker = L.marker([f.lat, f.lng], { icon: markerIcon })
+            .addTo(map)
+            .bindTooltip(`
+              <div class="min-w-[220px] p-2 font-sans bg-[#031B1D] text-white rounded-lg border border-white/10 shadow-2xl">
+                <div class="font-bold text-sm mb-1">${f.name}</div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" 
+                        style="background: ${cfg.color}20; color: ${cfg.color}; border: 1px solid ${cfg.color}40">
+                    ${cfg.label}
+                  </span>
+                  ${f.open24hr ? '<span class="text-[9px] font-bold text-green-400">● Open 24h</span>' : ''}
+                </div>
+                <div class="text-[10px] text-white/60 mb-2 leading-relaxed">
+                  <div class="flex items-start gap-1">
+                    <span>📍</span>
+                    <span>${f.address}</span>
+                  </div>
+                </div>
+                <div class="text-[10px] font-bold text-white/40 border-t border-white/5 pt-2 flex items-center gap-1">
+                  <span>📞</span>
+                  <span>${f.phone}</span>
+                </div>
+              </div>
+            `, { 
+              direction: 'top', 
+              offset: [0, -10], 
+              opacity: 1, 
+              className: 'custom-tooltip' 
+            })
+            .on('click', () => {
+              window.location.href = `tel:${f.phone}`;
+            });
+          markersRef.current.push(marker);
         });
 
-        L.marker([f.lat, f.lng], { icon: markerIcon })
-          .addTo(map)
-          .bindPopup(`
-            <div style="font-family:system-ui;min-width:220px;padding:2px 0">
-              <div style="font-weight:700;font-size:14px;color:#202124;margin-bottom:5px;line-height:1.3">${f.name}</div>
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap">
-                <span style="
-                  background:${cfg.color}18;color:${cfg.color};
-                  font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;
-                  border:1px solid ${cfg.color}40;letter-spacing:0.03em;
-                ">${cfg.label.toUpperCase()}</span>
-                ${dist ? `<span style="color:#5f6368;font-size:12px">📍 ${dist}</span>` : ""}
-                ${f.open24hr ? `<span style="color:#188038;font-size:11px;font-weight:600">● Open 24hr</span>` : ""}
-              </div>
-              ${f.address ? `
-                <div style="display:flex;gap:5px;margin-bottom:10px;align-items:flex-start">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#5f6368" style="flex-shrink:0;margin-top:2px">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>
-                  <div style="color:#5f6368;font-size:12px;line-height:1.5">${f.address}</div>
-                </div>
-              ` : ""}
-              <a href="tel:${f.phone}" style="
-                display:flex;align-items:center;justify-content:center;gap:7px;
-                background:${cfg.color};color:white;
-                padding:9px 16px;border-radius:8px;
-                font-weight:600;font-size:13px;text-decoration:none;
-                box-shadow:0 1px 4px rgba(0,0,0,0.2);
-                letter-spacing:0.01em;
-              ">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                  <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                </svg>
-                ${f.phone}
-              </a>
-            </div>
-          `, { className: "gm-popup", maxWidth: 280 });
-      });
-
-      // Fit bounds
-      const validFacilities = facilities.filter(f => f.lat && f.lng);
-      if (validFacilities.length > 0) {
+      if (facilities.length > 0) {
         const bounds = L.latLngBounds([
           [userLocation.lat, userLocation.lng],
-          ...validFacilities.map(f => [f.lat, f.lng] as [number, number]),
+          ...facilities.map(f => [f.lat, f.lng] as [number, number]),
         ]);
-        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
       }
     });
+  }, [facilities, userLocation, radius, activeFilters]);
 
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [facilities, userLocation]);
-
+  // --- Offline Gate removed to restore previous functionality ---
+  
   return (
-    <div
-      className="relative rounded-xl overflow-hidden"
-      style={{ height, boxShadow: "0 2px 16px rgba(0,0,0,0.12)", border: "1px solid #e8eaed" }}
-    >
-      <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
-
-      {/* Legend */}
-      <div style={{
-        position: "absolute", bottom: 36, left: 12, zIndex: 1000,
-        background: "white", borderRadius: 10,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
-        padding: "10px 14px",
-      }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: "#5f6368", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, fontFamily: "system-ui" }}>
-          Nearby Facilities
-        </div>
-        {Object.entries(TYPE_CONFIG).map(([type, cfg]) => {
-          const count = facilities.filter(f => f.type === type).length;
-          if (count === 0) return null;
-          return (
-            <div key={type} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <div style={{
-                width: 14, height: 14, borderRadius: "50%",
-                background: cfg.color,
-                border: "2px solid white",
-                boxShadow: `0 0 6px ${cfg.color}, 0 1px 4px rgba(0,0,0,0.2)`,
-                flexShrink: 0,
-              }} />
-              <span style={{ fontSize: 12, color: "#202124", fontFamily: "system-ui", fontWeight: 500 }}>{cfg.label}</span>
-              <span style={{
-                marginLeft: "auto", fontSize: 11, fontWeight: 700,
-                background: `${cfg.color}15`, color: cfg.color,
-                padding: "1px 7px", borderRadius: 10, fontFamily: "system-ui",
-              }}>{count}</span>
-            </div>
-          );
-        })}
-        <div style={{ borderTop: "1px solid #e8eaed", marginTop: 6, paddingTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#1a73e8", border: "2px solid white", boxShadow: "0 1px 4px rgba(26,115,232,0.4)", flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: "#202124", fontFamily: "system-ui", fontWeight: 500 }}>Your Location</span>
+    <div className="relative group/map overflow-hidden rounded-2xl border border-white/5 bg-[#011415] shadow-2xl" style={{ height }}>
+      <div ref={mapRef} className="w-full h-full z-0" />
+      
+      {/* Location Status Badge */}
+      <div className="absolute top-6 left-6 z-[1000] flex items-center gap-2">
+        <div className="px-4 py-2 rounded-xl bg-[#031B1D]/90 backdrop-blur-md border border-white/10 shadow-xl flex items-center gap-3">
+          <div className={`h-2 w-2 rounded-full ${permissionStatus === 'granted' ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}`} />
+          <span className="text-[10px] font-bold text-white uppercase tracking-widest">
+            {permissionStatus === 'granted' ? 'Live Intelligence' : 'Static Mode'}
+          </span>
+          {permissionStatus !== 'granted' && (
+            <button 
+              onClick={requestLocation}
+              className="ml-2 text-[9px] font-black text-blue-400 hover:text-blue-300 uppercase tracking-tighter"
+            >
+              Enable GPS
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Styles */}
-      <style>{`
-        .gm-popup .leaflet-popup-content-wrapper {
-          background: white !important;
-          border-radius: 12px !important;
-          box-shadow: 0 4px 24px rgba(0,0,0,0.18) !important;
-          border: none !important;
-          padding: 0 !important;
-        }
-        .gm-popup .leaflet-popup-content { margin: 14px 16px !important; }
-        .gm-popup .leaflet-popup-tip { background: white !important; box-shadow: none !important; }
-        .gm-popup .leaflet-popup-close-button { color: #5f6368 !important; font-size: 18px !important; top: 8px !important; right: 10px !important; }
-        .leaflet-control-zoom {
-          border: none !important;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
-          border-radius: 8px !important;
-          overflow: hidden !important;
-        }
-        .leaflet-control-zoom a {
-          background: white !important; color: #5f6368 !important;
-          border: none !important; border-bottom: 1px solid #e8eaed !important;
-          font-size: 18px !important; width: 36px !important; height: 36px !important;
-          line-height: 36px !important; font-weight: 300 !important;
-        }
-        .leaflet-control-zoom a:hover { background: #f8f9fa !important; color: #202124 !important; }
-        .leaflet-control-zoom-out { border-bottom: none !important; }
-        .leaflet-control-attribution {
-          background: rgba(255,255,255,0.9) !important; color: #5f6368 !important;
-          font-size: 10px !important; padding: 2px 6px !important;
-        }
-        .leaflet-control-attribution a { color: #1a73e8 !important; }
-      `}</style>
+      {/* Search & Filter Controls */}
+      <div className="absolute top-6 left-6 right-6 z-[1000] flex flex-col gap-4 pointer-events-none mt-14">
+        <div className="flex gap-3 pointer-events-auto">
+          <form onSubmit={handleGlobalSearch} className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+            <input 
+              type="text"
+              placeholder="Search global intelligence (e.g. Mumbai, New York...)"
+              className="w-full bg-[#031B1D]/90 backdrop-blur-md border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all shadow-2xl"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </form>
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`p-3 rounded-xl backdrop-blur-md border border-white/10 transition-all shadow-2xl ${showFilters ? 'bg-blue-500 text-white' : 'bg-[#031B1D]/90 text-white/70'}`}
+          >
+            <Filter className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={requestLocation}
+            className="p-3 rounded-xl bg-[#031B1D]/90 backdrop-blur-md border border-white/10 text-white/70 hover:text-white transition-all shadow-2xl"
+            title="Recenter & Discover"
+          >
+            <Navigation className="h-5 w-5" />
+          </button>
+        </div>
+
+        {showFilters && (
+          <div className="bg-[#031B1D]/95 backdrop-blur-lg border border-white/10 rounded-xl p-5 shadow-2xl pointer-events-auto animate-in slide-in-from-top-2 duration-200 w-full max-w-sm ml-auto">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Map Intelligence Filters</span>
+              <button onClick={() => setShowFilters(false)}><X className="h-4 w-4 text-white/40 hover:text-white" /></button>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold text-white/70 mb-3 block">Search Radius: {radius}km</label>
+                <input 
+                  type="range" min="1" max="25" step="1"
+                  value={radius}
+                  onChange={e => {
+                    const r = parseInt(e.target.value);
+                    setRadius(r);
+                    discoverFacilities(userLocation.lat, userLocation.lng, r);
+                  }}
+                  className="w-full accent-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-white/70 mb-3 block">Facility Categories</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["HOSPITAL", "CLINIC", "PHARMACY"] as const).map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        const next = activeFilters.categories.includes(cat)
+                          ? activeFilters.categories.filter(c => c !== cat)
+                          : [...activeFilters.categories, cat];
+                        setActiveFilters(prev => ({ ...prev, categories: next }));
+                      }}
+                      className={`py-2 rounded-lg text-[9px] font-bold border transition-all ${
+                        activeFilters.categories.includes(cat)
+                          ? 'border-white/20 bg-white/10 text-white'
+                          : 'border-white/5 bg-transparent text-white/30'
+                      }`}
+                    >
+                      {TYPE_CONFIG[cat].label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-white/40" />
+                  <span className="text-xs font-bold text-white/70">Only Open 24h</span>
+                </div>
+                <button 
+                  onClick={() => setActiveFilters(prev => ({ ...prev, only24h: !prev.only24h }))}
+                  className={`w-10 h-5 rounded-full relative transition-all ${activeFilters.only24h ? 'bg-green-500' : 'bg-white/10'}`}
+                >
+                  <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${activeFilters.only24h ? 'right-1' : 'left-1'}`} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {loading && (
+        <div className="absolute inset-0 z-[1100] bg-[#031B1D]/40 backdrop-blur-[2px] grid place-items-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
+            <span className="text-[10px] font-bold text-white uppercase tracking-widest">Scanning Grid...</span>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 bg-red-500/90 backdrop-blur-md rounded-lg text-[10px] font-bold text-white flex items-center gap-2 shadow-xl">
+          <AlertCircle className="h-3 w-3" />
+          {error}
+          <button onClick={() => setError(null)} className="ml-2 hover:opacity-50">×</button>
+        </div>
+      )}
+
+      {/* Legend Overlay */}
+      <div className="absolute bottom-6 left-6 z-[1000] p-4 rounded-xl bg-[#031B1D]/90 backdrop-blur-md border border-white/10 shadow-2xl">
+        <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-3">Intelligence Legend</div>
+        <div className="space-y-2.5">
+          <LegendItem color="#00C2FF" label="Your Location" />
+          <LegendItem color="#FF3B3B" label="Hospitals" count={facilities.filter(f => f.type === 'HOSPITAL').length} />
+          <LegendItem color="#FF9F1C" label="Clinics" count={facilities.filter(f => f.type === 'CLINIC').length} />
+          <LegendItem color="#00FF88" label="Pharmacies" count={facilities.filter(f => f.type === 'PHARMACY').length} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LegendItem({ color, label, count }: { color: string, label: string, count?: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-3 h-3 rounded-full border border-white/20 shadow-[0_0_8px_currentColor]" style={{ background: color, color }}></div>
+      <span className="text-xs font-bold text-white/80">{label}</span>
+      {count !== undefined && <span className="ml-auto text-[10px] font-mono text-white/40">{count}</span>}
     </div>
   );
 }

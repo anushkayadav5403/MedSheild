@@ -40,101 +40,128 @@ function PassportBuilderPage() {
   const progress = Math.round((currentChapter / CHAPTERS.length) * 100);
 
   return (
-    <div className="p-5 md:p-6 max-w-[1400px] mx-auto text-[#031B1D]">
-      <div className="mb-5 flex items-end justify-between flex-wrap gap-3">
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">Health Passport · Profile Builder</div>
-          <h1 className="font-display font-extrabold text-2xl md:text-3xl mt-1">Build Your Health Passport</h1>
-          <p className="text-sm opacity-60">Complete your medical profile · {CHAPTERS.length} chapters · Saved automatically</p>
+    <div className="flex flex-col min-h-[calc(100vh-52px)] text-white animate-fade-in" style={{ background: "#050B14" }}>
+      {/* Header */}
+      <div className="bg-[#0A1220] border-b border-white/5 px-4 py-3 md:px-8 md:py-4 sticky top-0 z-40">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-teal grid place-items-center text-black shadow-[0_0_15px_rgba(0,255,209,0.3)]">
+              <User className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="font-display font-black text-sm md:text-base tracking-tight">Medical Identity Builder</h1>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <div className="h-1 w-1 rounded-full bg-teal animate-pulse" />
+                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Secure AES-256 Storage</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Completion</span>
+                <span className="text-[10px] font-mono font-bold text-teal">{Math.round(progress)}%</span>
+              </div>
+              <div className="w-32 h-1 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-teal transition-all duration-500" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+            <button onClick={() => navigate({ to: "/passport" })} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+              <ChevronLeft className="h-5 w-5 text-white/40" />
+            </button>
+          </div>
         </div>
-        <button onClick={() => navigate({ to: "/passport" })} className="btn-ghost text-xs">
-          ← Back to Passport
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-5">
-        {/* Chapter Nav */}
-        <div className="panel space-y-1">
-          <div className="font-mono text-[10px] uppercase tracking-wider text-muted mb-2">Progress — {progress}%</div>
-          <div className="h-1 rounded-full overflow-hidden mb-4" style={{ background: "rgba(255,255,255,0.06)" }}>
-            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: "var(--teal)" }} />
-          </div>
-
+      <div className="flex-1 flex flex-col md:flex-row max-w-[1400px] mx-auto w-full overflow-hidden">
+        {/* Navigation Sidebar */}
+        <div className="w-full md:w-64 bg-[#0A1220]/50 border-r border-white/5 flex-shrink-0 p-4 md:p-6 space-y-1 overflow-y-auto">
           {CHAPTERS.map((ch) => {
             const Icon = ch.icon;
-            const active = currentChapter === ch.id;
-            const done = currentChapter > ch.id;
+            const isCompleted = ch.id < currentChapter;
+            const isActive = ch.id === currentChapter;
             return (
               <button
                 key={ch.id}
                 onClick={() => setChapter(ch.id)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all"
-                style={
-                  active
-                    ? { background: "var(--teal-dim)", border: "1px solid var(--teal)", color: "var(--teal)" }
-                    : done
-                    ? { color: "var(--mild)", border: "1px solid transparent" }
-                    : { color: "var(--mid)", border: "1px solid transparent" }
-                }
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all group ${
+                  isActive 
+                    ? "bg-teal/10 text-teal border border-teal/20 shadow-[0_0_20px_rgba(0,255,209,0.1)]" 
+                    : isCompleted 
+                      ? "text-teal hover:bg-white/5" 
+                      : "text-white/40 hover:bg-white/5"
+                }`}
               >
-                <div
-                  className="h-6 w-6 rounded-full grid place-items-center shrink-0 font-mono text-[10px] font-bold"
-                  style={
-                    active
-                      ? { background: "var(--teal)", color: "#0a1220" }
-                      : done
-                      ? { background: "var(--mild-bg)", color: "var(--mild)" }
-                      : { background: "rgba(255,255,255,0.06)", color: "var(--muted)" }
-                  }
-                >
-                  {done ? "✓" : ch.id}
+                <div className={`h-6 w-6 rounded-lg grid place-items-center transition-colors ${
+                  isActive ? "bg-teal text-black" : isCompleted ? "bg-teal/20 text-teal" : "bg-white/5 text-white/20"
+                }`}>
+                  {isCompleted ? <ClipboardCheck className="h-4 w-4" /> : <Icon className="h-3.5 w-3.5" />}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[12px] font-medium truncate">{ch.title}</div>
-                  <div className="text-[10px] text-muted truncate">{ch.desc}</div>
+                <div className="flex-1">
+                  <div className={`text-[11px] font-bold leading-none ${isActive ? "text-teal" : "text-inherit"}`}>{ch.title}</div>
+                  <div className="text-[8px] font-bold uppercase tracking-widest opacity-40 mt-1">Step {ch.id}</div>
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* Chapter Content */}
-        <div className="panel">
-          <div className="mb-5 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
-            <div className="font-mono text-[10px] uppercase tracking-wider text-muted">Chapter {currentChapter} of {CHAPTERS.length}</div>
-            <div className="font-display font-bold text-xl mt-1">{CHAPTERS[currentChapter - 1].title}</div>
+        {/* Content Area */}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          <div className="flex-1 p-4 md:p-10">
+            <div className="max-w-2xl mx-auto">
+              <div className="mb-8 animate-slide-up">
+                <div className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-teal/10 text-teal font-mono text-[9px] font-black tracking-widest uppercase mb-3">
+                  Section {currentChapter} of {CHAPTERS.length}
+                </div>
+                <h2 className="font-display font-black text-2xl md:text-3xl text-white tracking-tight">{CHAPTERS[currentChapter - 1].title}</h2>
+                <p className="text-sm text-white/50 mt-2 font-medium">{CHAPTERS[currentChapter - 1].desc}</p>
+              </div>
+              
+              <div className="animate-fade-in stagger-1">
+                <Suspense fallback={
+                  <div className="flex items-center justify-center py-16">
+                    <div className="h-6 w-6 border-2 rounded-full animate-spin border-teal border-t-transparent" />
+                  </div>
+                }>
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <ChapterComponent />
+                  </div>
+                </Suspense>
+              </div>
+            </div>
           </div>
 
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-16">
-              <div className="h-6 w-6 border-2 rounded-full animate-spin" style={{ borderColor: "var(--teal)", borderTopColor: "transparent" }} />
-            </div>
-          }>
-            <ChapterComponent />
-          </Suspense>
-
-          <div className="flex justify-between mt-8 pt-5 border-t" style={{ borderColor: "var(--border)" }}>
-            <button
-              onClick={() => setChapter(currentChapter - 1)}
-              disabled={currentChapter === 1}
-              className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="h-4 w-4" /> Previous
-            </button>
-
-            {currentChapter < CHAPTERS.length ? (
-              <button onClick={() => setChapter(currentChapter + 1)} className="btn-primary flex items-center gap-2 text-sm">
-                Next <ChevronRight className="h-4 w-4" />
-              </button>
-            ) : (
+          {/* Footer Navigation */}
+          <div className="bg-[#0A1220] border-t border-white/5 p-4 md:px-10 md:py-6 sticky bottom-0 z-30">
+            <div className="max-w-2xl mx-auto flex items-center justify-between">
               <button
-                onClick={() => navigate({ to: "/passport" })}
-                className="btn-primary flex items-center gap-2 text-sm"
-                disabled={!passportData.fullName}
+                disabled={currentChapter === 1}
+                onClick={() => setChapter(currentChapter - 1)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white/40 hover:text-teal transition-all disabled:opacity-20 uppercase tracking-widest"
               >
-                <ClipboardCheck className="h-4 w-4" /> View Passport
+                <ChevronLeft className="h-4 w-4" /> Back
               </button>
-            )}
+              
+              <div id="final-sync-portal" />
+
+              {currentChapter < CHAPTERS.length ? (
+                <button
+                  onClick={() => setChapter(currentChapter + 1)}
+                  className="flex items-center gap-2 px-8 py-2.5 bg-teal text-black rounded-xl font-bold text-xs hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,255,209,0.3)] uppercase tracking-widest"
+                >
+                  Continue <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate({ to: "/passport" })}
+                  className="px-6 py-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/5 font-bold text-xs transition-all uppercase tracking-widest"
+                >
+                  Exit without Saving
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

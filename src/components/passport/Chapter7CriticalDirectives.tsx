@@ -31,14 +31,14 @@ export default function Chapter7CriticalDirectives() {
                 type="checkbox"
                 checked={passportData.organDonor || false}
                 onChange={(e) => updatePassportData({ organDonor: e.target.checked })}
-                className="peer h-6 w-6 appearance-none rounded border border-border bg-input-bg checked:bg-red checked:border-red transition-all"
+                className="peer h-6 w-6 appearance-none rounded border border-white/20 bg-white/5 checked:bg-red checked:border-red transition-all shadow-inner"
                 style={{ accentColor: 'var(--red)' }}
               />
               <Heart className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
             </div>
           </label>
 
-          <label className="flex items-center justify-between p-4 panel cursor-pointer hover:bg-white/[0.03] transition-all">
+          <label className="flex items-center justify-between p-4 panel cursor-pointer hover:bg-white/[0.05] transition-all bg-white/[0.02]">
             <div className="flex items-center gap-3">
               <Activity className="h-5 w-5 text-amber-500" />
               <div>
@@ -51,7 +51,7 @@ export default function Chapter7CriticalDirectives() {
                 type="checkbox"
                 checked={passportData.dnr || false}
                 onChange={(e) => updatePassportData({ dnr: e.target.checked })}
-                className="peer h-6 w-6 appearance-none rounded border border-border bg-input-bg checked:bg-amber-500 checked:border-amber-500 transition-all"
+                className="peer h-6 w-6 appearance-none rounded border border-white/20 bg-white/5 checked:bg-amber-500 checked:border-amber-500 transition-all shadow-inner"
               />
               <Activity className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
             </div>
@@ -64,7 +64,7 @@ export default function Chapter7CriticalDirectives() {
               onChange={(e) => updatePassportData({ advanceDirective: e.target.value })}
               placeholder="Any additional healthcare directives or wishes..."
               rows={4}
-              className="input-base w-full resize-none bg-black/20"
+              className="input-base w-full resize-none bg-white/5 border-white/10 text-white placeholder:text-white/30"
             />
           </div>
         </div>

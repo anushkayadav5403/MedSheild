@@ -69,15 +69,15 @@ function IntelligencePage() {
   };
 
   return (
-    <div className="p-5 md:p-6 max-w-[1600px] mx-auto space-y-5 text-[#031B1D]">
+    <div className="p-5 md:p-6 max-w-[1600px] mx-auto space-y-5 text-foreground">
       <div>
         <div className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">
           Advanced Analytics · ML-Enhanced
         </div>
-        <h1 className="font-display font-extrabold text-2xl md:text-3xl mt-1">
+        <h1 className="font-display font-extrabold text-2xl md:text-3xl mt-1 text-foreground">
           Crisis Intelligence Hub
         </h1>
-        <p className="text-sm opacity-60">
+        <p className="text-sm text-foreground/60">
           AI outbreak forecasting, healthcare collapse prediction, vaccine logistics, mobility
           simulation, and real-time intervention impact analysis
         </p>

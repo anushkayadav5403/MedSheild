@@ -86,14 +86,14 @@ function PassportPage() {
     if (!user) {
       setShowAuthModal(true);
     } else {
-      resetPassport();
+      // Do not reset passport, allow editing
       navigate({ to: "/passport-builder" });
     }
   }
 
   function handleAuthSuccess() {
     setShowAuthModal(false);
-    resetPassport();
+    // Do not reset passport, allow editing
     navigate({ to: "/passport-builder" });
   }
 
@@ -144,16 +144,16 @@ function PassportPage() {
   // Not signed in and no passport → show sign-in prompt
   if (!user && !hasCustomPassport) {
     return (
-      <div className="p-5 md:p-6 max-w-[600px] mx-auto text-[#031B1D]">
+      <div className="p-5 md:p-6 max-w-[600px] mx-auto text-[var(--text)]">
         <div className="mb-5">
           <div className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">Health Passport · Medical Identity</div>
-          <h1 className="font-display font-extrabold text-2xl md:text-3xl mt-1">Crisis Health Passport</h1>
-          <p className="text-sm opacity-60">Your medical identity for pandemic response · QR-shareable · Offline-ready</p>
+          <h1 className="font-display font-extrabold text-2xl md:text-3xl mt-1 text-[var(--text)]">Crisis Health Passport</h1>
+          <p className="text-sm opacity-60 text-[var(--text)]/60">Your medical identity for pandemic response · QR-shareable · Offline-ready</p>
         </div>
 
         <div
-          className="rounded-2xl p-8 text-center space-y-6"
-          style={{ background: "linear-gradient(150deg, #111e30 0%, #0d1829 60%, #0a1220 100%)", border: "1px solid var(--border-bright)" }}
+          className="rounded-2xl p-8 text-center space-y-6 shadow-xl"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
         >
           <div
             className="h-20 w-20 rounded-full grid place-items-center mx-auto"
@@ -163,8 +163,8 @@ function PassportPage() {
           </div>
 
           <div>
-            <h2 className="font-display font-extrabold text-xl mb-2">Build Your Health Passport</h2>
-            <p className="text-sm text-mid">
+            <h2 className="font-display font-extrabold text-xl mb-2 text-[var(--text)]">Build Your Health Passport</h2>
+            <p className="text-sm text-[var(--text)]/60 font-medium">
               Create a secure digital health profile with your medical information, vaccinations, and emergency contacts.
               Generate a QR code that healthcare providers can scan in emergencies.
             </p>
@@ -178,12 +178,12 @@ function PassportPage() {
               <LogIn className="h-4 w-4" />
               Sign In & Build Passport
             </button>
-            <p className="text-[11px] text-muted">
-              Sign in with Google or email to save your passport securely to the cloud
+            <p className="text-[11px] text-[var(--text)]/40 font-bold uppercase tracking-widest">
+              Save your passport securely to the cloud
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[var(--border)]">
             {[
               { icon: "🔒", label: "Secure & Private" },
               { icon: "📱", label: "QR Code Access" },
@@ -191,7 +191,7 @@ function PassportPage() {
             ].map((f) => (
               <div key={f.label} className="text-center">
                 <div className="text-2xl mb-1">{f.icon}</div>
-                <div className="text-[10px] text-muted font-mono">{f.label}</div>
+                <div className="text-[10px] text-[var(--text)]/40 font-bold uppercase tracking-widest">{f.label}</div>
               </div>
             ))}
           </div>
@@ -208,17 +208,17 @@ function PassportPage() {
   }
 
   return (
-    <div className="p-5 md:p-6 max-w-[1400px] mx-auto text-[#031B1D]">
+    <div className="p-5 md:p-6 max-w-[1400px] mx-auto text-[var(--text)]">
       {/* Header */}
       <div className="mb-5 flex items-end justify-between flex-wrap gap-3">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">Health Passport · Medical Identity</div>
-          <h1 className="font-display font-extrabold text-2xl md:text-3xl mt-1">Crisis Health Passport</h1>
-          <p className="text-sm opacity-60">Your medical identity for pandemic response · QR-shareable · Offline-ready</p>
+          <h1 className="font-display font-extrabold text-2xl md:text-3xl mt-1 text-[var(--text)]">Crisis Health Passport</h1>
+          <p className="text-sm opacity-60 text-[var(--text)]/60">Your medical identity for pandemic response · QR-shareable · Offline-ready</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {user && hasCustomPassport && (
-            <button onClick={handleSaveToCloud} disabled={saving} className="btn-ghost text-xs flex items-center gap-1.5 py-2 px-3">
+            <button onClick={handleSaveToCloud} disabled={saving} className="btn-secondary text-xs flex items-center gap-1.5 py-2 px-3">
               <CloudUpload className="h-3.5 w-3.5" />
               {saving ? "Saving..." : "Save to Cloud"}
             </button>
@@ -234,82 +234,64 @@ function PassportPage() {
         {/* PASSPORT CARD */}
         <div className="lg:col-span-1">
           <div
-            className="rounded-2xl p-5 relative overflow-hidden"
-            style={{ background: "linear-gradient(150deg, #111e30 0%, #0d1829 60%, #0a1220 100%)", border: "1px solid var(--border-bright)" }}
+            className="rounded-2xl p-6 relative overflow-hidden shadow-2xl"
+            style={{ background: "linear-gradient(135deg, #0a1220 0%, #031b1d 100%)", border: "1px solid rgba(255,255,255,0.1)" }}
           >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="font-mono text-[9px] text-muted uppercase tracking-widest">MedShield · IN</div>
-                <div className="font-display font-extrabold text-xl mt-1 leading-tight">{name}</div>
-                <div className="text-xs text-mid">
+            <div className="flex items-center gap-2 flex-wrap mb-6">
+              <div className="flex-1">
+                <div className="font-mono text-[9px] text-white/40 uppercase tracking-widest font-bold">MedShield · India</div>
+                <div className="font-display font-extrabold text-2xl mt-1 leading-tight text-white">{name}</div>
+                <div className="text-xs text-white/50 font-bold uppercase tracking-widest mt-1">
                   {age !== null ? `${age} yrs` : "Age unknown"} · Citizen
                 </div>
               </div>
               <div
-                className="h-11 w-11 rounded-full grid place-items-center font-display font-extrabold text-white text-lg"
-                style={{ background: "var(--red)", boxShadow: "0 0 20px var(--red-glow)" }}
+                className="h-14 w-14 rounded-2xl grid place-items-center font-display font-extrabold text-white text-xl shadow-lg"
+                style={{ background: "var(--red)", border: "2px solid rgba(255,255,255,0.2)" }}
               >
                 {bloodType}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-1.5 mb-4">
+            <div className="flex flex-wrap gap-2 mb-6">
               {(hasCustomPassport ? passportData.vaccinations?.length ?? 0 : myPassport.doses.length) >= 1 && (
-                <span className="text-[10px] font-bold font-mono px-2 py-1 rounded-md flex items-center gap-1" style={{ background: "var(--mild-bg)", color: "var(--mild)", border: "1px solid var(--mild)" }}>
+                <span className="text-[10px] font-bold font-mono px-3 py-1.5 rounded-xl flex items-center gap-1.5 bg-white/5 text-white border border-white/10 uppercase tracking-widest">
                   <Syringe className="h-3 w-3" />
-                  VACCINATED · {hasCustomPassport ? passportData.vaccinations?.length : myPassport.doses.length} DOSES
+                  {hasCustomPassport ? passportData.vaccinations?.length : myPassport.doses.length} Doses
                 </span>
               )}
               {allergies.length > 0 && (
-                <span className="text-[10px] font-bold font-mono px-2 py-1 rounded-md flex items-center gap-1" style={{ background: "var(--red-dim)", color: "var(--red)", border: "1px solid var(--red)" }}>
-                  <AlertCircle className="h-3 w-3" /> ALLERGY
+                <span className="text-[10px] font-bold font-mono px-3 py-1.5 rounded-xl flex items-center gap-1.5 bg-red-500/20 text-white border border-red-500/30 uppercase tracking-widest">
+                  <AlertCircle className="h-3 w-3" /> Allergy
                 </span>
               )}
             </div>
 
-            <div className="bg-white rounded-lg p-3 grid place-items-center relative">
+            <div className="bg-white rounded-2xl p-4 grid place-items-center relative shadow-inner">
               {hasCustomPassport && user ? (
                 <QRCodeCanvas value={scanUrl} size={200} level="H" />
               ) : (
-                <div className="h-[200px] w-[200px] bg-neutral-100 flex flex-col items-center justify-center text-center p-4">
-                  <AlertCircle className="h-8 w-8 text-neutral-400 mb-2" />
-                  <div className="text-[10px] text-neutral-500 font-mono">PASSPORT NOT SYNCED</div>
-                  <div className="text-[8px] text-neutral-400 mt-1">Complete profile and sign in to generate QR code</div>
+                <div className="h-[200px] w-[200px] bg-neutral-900 rounded-xl flex flex-col items-center justify-center text-center p-4 border border-white/5">
+                  <AlertCircle className="h-8 w-8 text-neutral-700 mb-2" />
+                  <div className="text-[10px] text-neutral-600 font-mono font-bold uppercase tracking-widest">Passport Incomplete</div>
                 </div>
               )}
             </div>
-            <div className="text-center font-mono text-[10px] text-muted mt-2 truncate">{scanUrl || "Not Generated"}</div>
+            <div className="text-center font-mono text-[9px] text-white/30 mt-3 truncate px-4">{scanUrl || "Scan URL Not Available"}</div>
 
-            {!hasCustomPassport ? (
-              <div className="mt-4 rounded-md p-2.5 text-center" style={{ background: "var(--red-dim)", border: "1px solid var(--red)" }}>
-                <div className="font-mono text-[10px] text-red font-bold tracking-wider">⚠ PROFILE INCOMPLETE</div>
-                <div className="text-[10px] text-mid mt-0.5">Start the builder to create your passport</div>
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[10px] uppercase tracking-wider text-white/40 font-bold">Pandemic Readiness</span>
+                <span className="font-mono font-extrabold text-white text-xl leading-none">{score}%</span>
               </div>
-            ) : !user ? (
-              <div className="mt-4 rounded-md p-2.5 text-center" style={{ background: "var(--moderate-bg)", border: "1px solid var(--moderate)" }}>
-                <div className="font-mono text-[10px] text-moderate font-bold tracking-wider">⚠ NOT SYNCED</div>
-                <div className="text-[10px] text-mid mt-0.5">Sign in to save your passport to the cloud</div>
-              </div>
-            ) : (
-              <div className="mt-4 rounded-md p-2.5 text-center" style={{ background: "var(--mild-bg)", border: "1px solid var(--mild)" }}>
-                <div className="font-mono text-[10px] text-mild font-bold tracking-wider">✓ PANDEMIC READY</div>
-                <div className="text-[10px] text-mid mt-0.5">Synced to cloud · Scan-ready</div>
-              </div>
-            )}
-
-            <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
-              <div className="flex items-baseline justify-between mb-1">
-                <span className="text-[10px] uppercase tracking-wider text-muted">Pandemic Readiness</span>
-                <span className="font-mono font-extrabold text-teal text-xl leading-none">{score}%</span>
-              </div>
-              <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full transition-all duration-700" style={{ width: `${score}%`, background: "var(--teal)" }} />
+              <div className="h-1.5 rounded-full overflow-hidden bg-white/5">
+                <div className="h-full transition-all duration-700 bg-[var(--teal)] shadow-[0_0_10px_rgba(0,255,209,0.5)]" style={{ width: `${score}%` }} />
               </div>
             </div>
 
             {user && (
-              <div className="mt-3 text-center font-mono text-[9px]" style={{ color: "var(--teal)" }}>
-                ● {user.displayName || user.email?.split("@")[0]}
+              <div className="mt-4 text-center font-mono text-[9px] text-white/30 font-bold uppercase tracking-[0.3em]">
+                Verified · {user.displayName || user.email?.split("@")[0]}
               </div>
             )}
           </div>
@@ -317,59 +299,58 @@ function PassportPage() {
 
         {/* RIGHT COLUMN */}
         <div className="lg:col-span-2 space-y-5">
-          <div className="panel">
-            <div className="flex items-center justify-between mb-4">
+          <div className="panel bg-white/5">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <div className="font-display font-bold text-lg">Vaccination Record</div>
-                <div className="text-[10px] text-muted font-mono uppercase tracking-widest">CoWIN-verified dose history</div>
+                <div className="font-display font-bold text-xl text-[var(--text)]">Vaccination Record</div>
+                <div className="text-[10px] text-[var(--text)]/40 font-bold font-mono uppercase tracking-widest mt-1">CoWIN-verified dose history</div>
               </div>
-              <button className="btn-secondary text-[11px] py-1.5 px-3">Sync with CoWIN</button>
+              <button className="btn-ghost text-[11px] py-2 px-4">Sync with CoWIN</button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {hasCustomPassport ? (
                 passportData.vaccinations?.length ? (
                   passportData.vaccinations.map((v, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4 rounded-md bg-white/[0.03] border border-white/[0.05]">
-                      <div className="h-10 w-10 rounded-full border-2 border-teal/30 grid place-items-center font-display font-bold text-teal">
+                    <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] group hover:border-[var(--teal)] transition-all">
+                      <div className="h-12 w-12 rounded-xl bg-white/5 border border-[var(--border)] grid place-items-center font-display font-black text-[var(--teal)] text-lg shadow-sm">
                         {v.dose}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <div className="font-bold">{v.vaccine}</div>
-                          <span className="text-[8px] font-mono font-bold bg-teal/10 text-teal px-1.5 py-0.5 rounded border border-teal/20 flex items-center gap-1">
-                            <CheckCircle2 className="h-2 w-2" /> COWIN VERIFIED
+                          <div className="font-bold text-[var(--text)]">{v.vaccine}</div>
+                          <span className="text-[9px] font-bold bg-[var(--teal)]/10 text-[var(--teal)] px-2 py-0.5 rounded-md border border-[var(--teal)]/20 flex items-center gap-1 uppercase tracking-widest">
+                            <CheckCircle2 className="h-2.5 w-2.5" /> Verified
                           </span>
                         </div>
-                        <div className="text-xs text-muted mt-0.5">{v.location || 'Government Health Center'}</div>
-                        <div className="text-[10px] font-mono text-mid mt-1 uppercase tracking-wider">
-                          {v.batch ? `Batch ${v.batch}` : 'CoWIN Verified'} · {v.date}
+                        <div className="text-xs text-[var(--text)]/60 mt-1 font-medium">{v.location || 'Government Health Center'}</div>
+                        <div className="text-[10px] font-bold font-mono text-[var(--text)]/40 mt-1.5 uppercase tracking-widest">
+                          {v.batch ? `Batch ${v.batch}` : 'Verified'} · {v.date}
                         </div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="p-8 text-center border border-dashed border-white/10 rounded-md">
-                    <Syringe className="h-8 w-8 text-muted mx-auto mb-2 opacity-20" />
-                    <div className="text-sm text-muted font-medium">No vaccinations recorded</div>
-                    <div className="text-[10px] text-muted/50 mt-1">Update your profile to add your dose history</div>
+                  <div className="p-12 text-center border-2 border-dashed border-[var(--border)] rounded-2xl bg-[var(--bg)]/50">
+                    <Syringe className="h-10 w-10 text-[var(--text)]/10 mx-auto mb-3" />
+                    <div className="text-sm text-[var(--text)]/40 font-bold uppercase tracking-widest">No doses recorded</div>
                   </div>
                 )
               ) : (
                 myPassport.doses.map((d, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 rounded-md bg-white/[0.03] border border-white/[0.05]">
-                    <div className="h-10 w-10 rounded-full border-2 border-teal/30 grid place-items-center font-display font-bold text-teal">
+                  <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-[var(--bg)] border border-[var(--border)] group hover:border-[var(--teal)] transition-all">
+                    <div className="h-12 w-12 rounded-xl bg-white/5 border border-[var(--border)] grid place-items-center font-display font-black text-[var(--teal)] text-lg shadow-sm">
                       {i + 1}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="font-bold">{d.vaccine}</div>
-                        <span className="text-[8px] font-mono font-bold bg-teal/10 text-teal px-1.5 py-0.5 rounded border border-teal/20 flex items-center gap-1">
-                          <CheckCircle2 className="h-2 w-2" /> COWIN VERIFIED
+                        <div className="font-bold text-[var(--text)]">{d.vaccine}</div>
+                        <span className="text-[9px] font-bold bg-[var(--teal)]/10 text-[var(--teal)] px-2 py-0.5 rounded-md border border-[var(--teal)]/20 flex items-center gap-1 uppercase tracking-widest">
+                          <CheckCircle2 className="h-2.5 w-2.5" /> Verified
                         </span>
                       </div>
-                      <div className="text-xs text-muted mt-0.5">{d.site}</div>
-                      <div className="text-[10px] font-mono text-mid mt-1 uppercase tracking-wider">
+                      <div className="text-xs text-[var(--text)]/60 mt-1 font-medium">{d.site}</div>
+                      <div className="text-[10px] font-bold font-mono text-[var(--text)]/40 mt-1.5 uppercase tracking-widest">
                         Batch {d.batch} · {d.date}
                       </div>
                     </div>
@@ -379,23 +360,23 @@ function PassportPage() {
             </div>
           </div>
 
-          <div className="panel">
-            <div className="flex items-center justify-between mb-3">
+          <div className="panel bg-white/5">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <div className="font-display font-bold text-lg">Daily Symptom Check-in</div>
-                <div className="text-[11px] text-mid">Helps detect outbreaks in your area</div>
+                <div className="font-display font-bold text-xl text-[var(--text)]">Daily Symptom Check-in</div>
+                <div className="text-[10px] text-[var(--text)]/40 font-bold uppercase tracking-widest mt-1">Outbreak detection network</div>
               </div>
-              <button onClick={() => setShowCheckIn(true)} className="btn-primary text-sm">Check In Today</button>
+              <button onClick={() => setShowCheckIn(true)} className="btn-primary text-xs py-2 px-5">Check In Today</button>
             </div>
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-3">
               {days.map((s, i) => {
-                const c = s === "ok" ? "var(--mild)" : s === "mild" ? "var(--moderate)" : s === "bad" ? "var(--red)" : "var(--muted)";
-                const bg = s === "ok" ? "var(--mild-bg)" : s === "mild" ? "var(--moderate-bg)" : s === "bad" ? "var(--red-dim)" : "transparent";
+                const c = s === "ok" ? "var(--mild)" : s === "mild" ? "var(--moderate)" : s === "bad" ? "var(--severe)" : "var(--muted)";
+                const bg = s === "ok" ? "var(--mild-bg)" : s === "mild" ? "var(--moderate-bg)" : s === "bad" ? "var(--severe-bg)" : "transparent";
                 const d = new Date(); d.setDate(d.getDate() - (6 - i));
                 return (
-                  <div key={i} className="rounded-md p-2 text-center" style={{ background: bg, border: `1px solid ${s === "none" ? "var(--border)" : c}` }}>
-                    <div className="font-mono text-[9px] text-muted">{d.toLocaleDateString("en", { weekday: "short" }).slice(0, 2).toUpperCase()}</div>
-                    <div className="font-display font-bold text-sm mt-0.5" style={{ color: c }}>{d.getDate()}</div>
+                  <div key={i} className="rounded-xl p-3 text-center transition-all hover:scale-105" style={{ background: bg, border: `1px solid ${s === "none" ? "var(--border)" : c}` }}>
+                    <div className="font-mono text-[9px] text-[var(--text)]/40 font-bold uppercase tracking-widest">{d.toLocaleDateString("en", { weekday: "short" }).slice(0, 2)}</div>
+                    <div className="font-display font-black text-lg mt-1" style={{ color: c }}>{d.getDate()}</div>
                   </div>
                 );
               })}
@@ -403,9 +384,9 @@ function PassportPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="panel">
-              <div className="font-display font-bold mb-2 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-teal" /> Medical Profile
+            <div className="panel bg-white/5">
+              <div className="font-display font-bold text-lg mb-6 flex items-center gap-2 text-[var(--text)]">
+                <ShieldCheck className="h-5 w-5 text-[var(--teal)]" /> Medical Profile
               </div>
               <ProfileRow 
                 label="Allergies" 
@@ -413,7 +394,7 @@ function PassportPage() {
                   ? (passportData.allergyDetails?.map(a => `${a.name}${a.severity !== 'Moderate' ? ` (${a.severity})` : ''}`) || passportData.allergies || [])
                   : myPassport.allergies
                 } 
-                c="var(--red)" 
+                c="var(--severe)" 
               />
               <ProfileRow 
                 label="Conditions" 
@@ -432,20 +413,28 @@ function PassportPage() {
                 c="var(--blue)" 
               />
             </div>
-            <div className="panel">
-              <div className="font-display font-bold mb-2 flex items-center gap-2">
-                <Phone className="h-4 w-4 text-teal" /> Emergency Contacts
+            <div className="panel bg-white/5">
+              <div className="font-display font-bold text-lg mb-6 flex items-center gap-2 text-[var(--text)]">
+                <Phone className="h-5 w-5 text-[var(--teal)]" /> Emergency Contacts
               </div>
-              <div className="space-y-2 mt-3">
-                {(hasCustomPassport && passportData.emergencyContacts?.length ? passportData.emergencyContacts : myPassport.emergencyContacts).map((c, i) => (
-                  <a key={i} href={`tel:${c.phone}`} className="flex items-center justify-between p-2.5 rounded-md hover:bg-white/[0.04] transition-colors" style={{ background: "var(--input-bg)" }}>
-                    <div>
-                      <div className="text-sm font-medium">{c.name}</div>
-                      <div className="font-mono text-xs text-teal">{c.phone}</div>
-                    </div>
-                    <Phone className="h-4 w-4 text-teal" />
-                  </a>
-                ))}
+              <div className="space-y-3">
+                {hasCustomPassport && passportData.emergencyContacts?.length ? (
+                  passportData.emergencyContacts.map((c, i) => (
+                    <a key={i} href={`tel:${c.phone}`} className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--teal)] transition-all group">
+                      <div>
+                        <div className="text-sm font-bold text-[var(--text)]">{c.name}</div>
+                        <div className="font-mono text-[11px] text-[var(--teal)] font-bold mt-1 tracking-wider">{c.phone}</div>
+                      </div>
+                      <div className="h-8 w-8 rounded-lg bg-white/5 border border-[var(--border)] grid place-items-center group-hover:bg-[var(--teal)] group-hover:text-black transition-all">
+                        <Phone className="h-4 w-4" />
+                      </div>
+                    </a>
+                  ))
+                ) : (
+                  <div className="p-8 text-center border-2 border-dashed border-[var(--border)] rounded-2xl bg-[var(--bg)]/50">
+                    <div className="text-xs text-[var(--text)]/40 font-bold uppercase tracking-widest italic">No contacts added</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

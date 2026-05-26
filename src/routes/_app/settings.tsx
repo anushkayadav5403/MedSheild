@@ -19,10 +19,10 @@ function Settings() {
   const profileEmail = passportData.fullName ? `${passportData.fullName.toLowerCase().replace(/\s+/g, '.')}@medshield.gov` : "aarav.sharma@medshield.gov";
 
   return (
-    <div className="p-5 md:p-8 max-w-4xl mx-auto space-y-8 text-white animate-fade-in">
+    <div className="p-5 md:p-8 max-w-4xl mx-auto space-y-8 text-foreground animate-fade-in">
       <div className="animate-slide-up stagger-1">
-        <h1 className="font-display font-extrabold text-3xl md:text-4xl text-[#031B1D]">Settings</h1>
-        <p className="text-sm text-[#031B1D]/50 mt-1">Platform configuration and profile management</p>
+        <h1 className="font-display font-extrabold text-3xl md:text-4xl text-foreground">Settings</h1>
+        <p className="text-sm text-foreground/50 mt-1">Platform configuration and profile management</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -136,7 +136,7 @@ function Settings() {
 function Tab({ icon: Icon, label, active = false }: { icon: any; label: string; active?: boolean }) {
   return (
     <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-      active ? "bg-teal/10 text-teal border border-teal/20" : "text-white/40 hover:text-white hover:bg-white/5"
+      active ? "bg-teal/10 text-teal border border-teal/20 shadow-[0_0_20px_rgba(0,255,209,0.1)]" : "text-foreground/40 hover:text-foreground hover:bg-black/5"
     }`}>
       <Icon className="h-4 w-4" />
       <span className="flex-1 text-left">{label}</span>

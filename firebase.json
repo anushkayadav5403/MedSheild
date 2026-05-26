@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "sentinel-pandemic",
     "public": "dist/spa",
     "ignore": [
       "firebase.json",

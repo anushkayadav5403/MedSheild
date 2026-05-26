@@ -3,24 +3,21 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { usePassportStore } from "@/lib/passportStore";
 import { useAuth } from "@/lib/useAuth";
 import { useOnline } from "@/lib/roleStore";
-import { useChatStore } from "@/lib/chatStore";
 import {
-  sendMessageToDrMedShield,
+  sendMessageToDrSentinel,
   detectUrgencyLevel,
   detectAllergyFlag,
-  getGroqApiKey,
-  saveGroqApiKey,
-  type DrMedShieldMessage,
-  type DrMedShieldContext,
+  type DrSentinelMessage,
+  type DrSentinelContext,
 } from "@/lib/drSentinel";
 import {
   Send, Stethoscope, AlertTriangle, Pill, Activity,
   FileText, Phone, Shield, Loader2, ChevronDown, ChevronUp,
-  RotateCcw, WifiOff, Settings, Key, Check, X
+  RotateCcw, WifiOff,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/dr-sentinel")({
-  component: DrMedShieldPage,
+  component: DrSentinelPage,
 });
 
 const QUICK_ACTIONS = [
@@ -31,55 +28,49 @@ const QUICK_ACTIONS = [
 ];
 
 const URGENCY_CONFIG = {
-  EMERGENCY:    { bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.4)",  text: "#ef4444", icon: "🔴", label: "EMERGENCY — Call 112 now" },
-  URGENT:       { bg: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.4)", text: "#f97316", icon: "🟠", label: "URGENT — See a doctor within 6 hours" },
-  "SEMI-URGENT":{ bg: "rgba(234,179,8,0.12)",  border: "rgba(234,179,8,0.4)",  text: "#eab308", icon: "🟡", label: "SEMI-URGENT — Doctor within 24 hours" },
-  "NON-URGENT": { bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.4)",  text: "#22c55e", icon: "🟢", label: "MONITOR AT HOME" },
+  EMERGENCY:     { bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.4)",  text: "#ef4444", icon: "🔴", label: "EMERGENCY — Call 112 now" },
+  URGENT:        { bg: "rgba(249,115,22,0.12)", border: "rgba(249,115,22,0.4)", text: "#f97316", icon: "🟠", label: "URGENT — See a doctor within 6 hours" },
+  "SEMI-URGENT": { bg: "rgba(234,179,8,0.12)",  border: "rgba(234,179,8,0.4)",  text: "#eab308", icon: "🟡", label: "SEMI-URGENT — Doctor within 24 hours" },
+  "NON-URGENT":  { bg: "rgba(34,197,94,0.12)",  border: "rgba(34,197,94,0.4)",  text: "#22c55e", icon: "🟢", label: "MONITOR AT HOME" },
   INFO: null,
 };
 
-function DrMedShieldPage() {
+function DrSentinelPage() {
   const { passportData } = usePassportStore();
   const { user } = useAuth();
   const online = useOnline();
-  const { messages, addMessage, clearChat, isEmergency, setIsEmergency } = useChatStore();
 
+  const [messages, setMessages] = useState<DrSentinelMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassport, setShowPassport] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [tempApiKey, setTempApiKey] = useState(getGroqApiKey());
+  const [isEmergency, setIsEmergency] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const hasPassport = !!passportData.fullName;
 
-  const ctx: DrMedShieldContext = {
+  const ctx: DrSentinelContext = {
     passport: hasPassport ? passportData : null,
     userName: passportData.fullName || user?.displayName || undefined,
     userDistrict: "India",
     activeOutbreaks: [
       "COVID-19 (active, Rt ~1.2)",
       "Dengue (seasonal peak — Karnataka, Tamil Nadu, West Bengal)",
-      "Hantavirus (cluster alerts — Himachal Pradesh, Uttarakhand)",
-      "Influenza H1N1 (moderate activity — North India)",
+      "Hantavirus (cluster alerts — Himachal Pradesh)",
     ],
   };
 
-  // Welcome message on mount
   useEffect(() => {
-    if (messages.length === 0) {
-      const firstName = passportData.fullName?.split(" ")[0] || "";
-      const welcome: DrMedShieldMessage = {
-        role: "assistant",
-        content: hasPassport
-          ? `Hello ${firstName}. I'm **Dr. MedShield** — your medical intelligence system.\n\n**Your passport is loaded ✓** — I have your medical history, allergies, medications, and vaccinations. I also have live outbreak intelligence for your region.\n\nHow can I help you today?`
-          : `Hello. I'm **Dr. MedShield** — your medical intelligence system.\n\nI don't have a health passport for you yet. My responses will be more general without your medical history. Consider building your **Health Passport** for fully personalized guidance.\n\nHow can I help you today?`,
-        timestamp: new Date(),
-        urgencyLevel: "INFO",
-      };
-      addMessage(welcome);
-    }
+    const firstName = passportData.fullName?.split(" ")[0] || "";
+    setMessages([{
+      role: "assistant",
+      content: hasPassport
+        ? `Hello ${firstName}. I'm **Dr. MedShield** — your medical intelligence system.\n\n**Your passport is loaded ✓** — I have your medical history, allergies, medications, and vaccinations. I also have live outbreak intelligence for your region.\n\nHow can I help you today?`
+        : `Hello. I'm **Dr. MedShield** — your medical intelligence system.\n\nI don't have a health passport for you yet. My responses will be more general without your medical history. Consider building your **Health Passport** for fully personalized guidance.\n\nHow can I help you today?`,
+      timestamp: new Date(),
+      urgencyLevel: "INFO",
+    }]);
   }, []);
 
   useEffect(() => {
@@ -91,39 +82,35 @@ function DrMedShieldPage() {
     if (!messageText || loading) return;
 
     setInput("");
-    const userMsg: DrMedShieldMessage = {
+    const userMsg: DrSentinelMessage = {
       role: "user",
       content: messageText,
       timestamp: new Date(),
     };
 
-    addMessage(userMsg);
+    setMessages(prev => [...prev, userMsg]);
     setLoading(true);
 
     try {
       const allMessages = [...messages, userMsg];
-      const response = await sendMessageToDrMedShield(allMessages, ctx);
-
+      const response = await sendMessageToDrSentinel(allMessages, ctx);
       const urgency = detectUrgencyLevel(response);
       const hasAllergy = detectAllergyFlag(response);
-
       if (urgency === "EMERGENCY") setIsEmergency(true);
-
-      addMessage({
+      setMessages(prev => [...prev, {
         role: "assistant",
         content: response,
         timestamp: new Date(),
         urgencyLevel: urgency,
         hasAllergyFlag: hasAllergy,
-      });
+      }]);
     } catch (err: any) {
-      console.error("Dr. MedShield error:", err);
-      addMessage({
+      setMessages(prev => [...prev, {
         role: "assistant",
-        content: `I'm having trouble connecting to the AI right now. Error: ${err.message}\n\nIf this is an emergency, please call **112** immediately.`,
+        content: `I'm having trouble connecting right now. Error: ${err.message}\n\nIf this is an emergency, please call **112** immediately.`,
         timestamp: new Date(),
         urgencyLevel: "INFO",
-      });
+      }]);
     } finally {
       setLoading(false);
     }
@@ -137,291 +124,139 @@ function DrMedShieldPage() {
   };
 
   const resetConversation = () => {
-    clearChat();
+    setIsEmergency(false);
     const firstName = passportData.fullName?.split(" ")[0] || "";
-    addMessage({
+    setMessages([{
       role: "assistant",
-      content: hasPassport
-        ? `Hello ${firstName}. Starting a new conversation. How can I help you?`
-        : `Hello. Starting a new conversation. How can I help you?`,
+      content: `Hello ${firstName || ""}. Starting a new conversation. How can I help you?`,
       timestamp: new Date(),
       urgencyLevel: "INFO",
-    });
+    }]);
   };
 
-  const renderMessage = (content: string) => {
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n/g, '<br/>');
-  };
+  const renderMessage = (content: string) =>
+    content
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/\n/g, "<br/>");
 
   return (
-    <div className="flex h-[calc(100vh-52px)]" style={{ background: "#0a1220" }}>
-      {/* Main chat area */}
+    <div className="flex h-[calc(100vh-52px)]" style={{ background: "var(--bg)" }}>
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Chat header */}
-        <div
-          className="flex items-center justify-between px-5 py-3 shrink-0"
-          style={{ background: "#0d1829", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-        >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ background: "rgba(0,0,0,0.2)", borderBottom: "1px solid var(--border)", boxShadow: "0 2px 10px rgba(0,0,0,0.3)" }}>
           <div className="flex items-center gap-3">
-            <div
-              className="h-9 w-9 rounded-xl grid place-items-center shrink-0"
-              style={{ background: "var(--teal)", boxShadow: "0 0 16px rgba(13,148,136,0.35)" }}
-            >
-              <Stethoscope className="h-4.5 w-4.5 text-white" />
+            <div className="h-10 w-10 rounded-xl grid place-items-center shrink-0" style={{ background: "var(--teal)", boxShadow: "0 0 15px rgba(0,255,209,0.3)" }}>
+              <Stethoscope className="h-5 w-5 text-black" />
             </div>
             <div>
               <div className="font-display font-extrabold text-base leading-none text-white">Dr. MedShield</div>
-              <div className="font-mono text-[9px] mt-0.5 flex items-center gap-1.5">
+              <div className="font-mono text-[9px] mt-1 flex items-center gap-1.5">
                 {online ? (
                   <>
-                    <span className="h-1.5 w-1.5 rounded-full animate-pulse inline-block" style={{ background: "var(--teal)" }} />
-                    <span style={{ color: "var(--teal)" }}>
-                      {hasPassport ? "Passport loaded ✓" : "No passport"} · Groq AI Live
+                    <span className="h-1.5 w-1.5 rounded-full animate-pulse inline-block" style={{ background: "var(--mild)" }} />
+                    <span className="text-white/60 font-bold uppercase tracking-widest">
+                      {hasPassport ? "Passport Loaded" : "No Passport"} · Llama 3.3
                     </span>
                   </>
                 ) : (
-                  <>
-                    <WifiOff className="h-3 w-3 text-orange-400" />
-                    <span className="text-orange-400">Offline</span>
-                  </>
+                  <><WifiOff className="h-3 w-3 text-orange-500" /><span className="text-orange-500">Offline</span></>
                 )}
               </div>
             </div>
           </div>
-
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setShowSettings(s => !s);
-                setShowPassport(false);
-              }}
-              className="p-1.5 rounded-lg transition-all"
-              style={{
-                background: showSettings ? "var(--teal-dim)" : "rgba(255,255,255,0.05)",
-                color: showSettings ? "var(--teal)" : "var(--mid)",
-              }}
-              title="AI Settings"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
             {hasPassport && (
               <button
-                onClick={() => {
-                  setShowPassport(s => !s);
-                  setShowSettings(false);
-                }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-mono font-bold transition-all"
-                style={{
-                  background: showPassport ? "var(--teal-dim)" : "rgba(255,255,255,0.05)",
-                  color: showPassport ? "var(--teal)" : "var(--mid)",
-                  border: `1px solid ${showPassport ? "var(--teal)" : "transparent"}`,
+                onClick={() => setShowPassport(s => !s)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold transition-all border"
+                style={{ 
+                  background: showPassport ? "var(--teal)" : "transparent", 
+                  color: showPassport ? "black" : "var(--teal)", 
+                  borderColor: "var(--teal)" 
                 }}
               >
-                <Shield className="h-3 w-3" />
+                <Shield className="h-3.5 w-3.5" />
                 Passport
                 {showPassport ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               </button>
             )}
-            <button
-              onClick={resetConversation}
-              className="p-1.5 rounded-lg text-muted hover:text-white transition-colors"
-              title="New conversation"
-            >
+            <button onClick={resetConversation} className="p-2 rounded-xl text-[var(--text)]/40 hover:text-[var(--text)] hover:bg-white/5 transition-all" title="New conversation">
               <RotateCcw className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        {/* Passport quick reference */}
+        {/* Passport panel */}
         {showPassport && hasPassport && (
-          <div
-            className="px-5 py-3 shrink-0 space-y-2"
-            style={{ background: "rgba(13,148,136,0.06)", borderBottom: "1px solid rgba(13,148,136,0.15)" }}
-          >
-            <div className="font-mono text-[9px] uppercase tracking-widest text-muted mb-2">Health Passport Summary</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+          <div className="px-5 py-4 shrink-0 bg-white/5 backdrop-blur-md border-b border-[var(--border)]">
+            <div className="font-mono text-[9px] uppercase tracking-widest text-[var(--text)]/40 mb-3 font-bold">Health Passport Summary</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: "Blood Type", value: passportData.bloodType ? `${passportData.bloodType}${passportData.rhFactor === "positive" ? "+" : passportData.rhFactor === "negative" ? "-" : ""}` : "Unknown" },
-                { label: "Allergies", value: passportData.allergies?.length ? passportData.allergies.slice(0, 2).join(", ") + (passportData.allergies.length > 2 ? "..." : "") : "None" },
-                { label: "Conditions", value: passportData.conditions?.length ? passportData.conditions.slice(0, 2).join(", ") + (passportData.conditions.length > 2 ? "..." : "") : "None" },
-                { label: "Medications", value: passportData.medications?.length ? passportData.medications.slice(0, 2).map(m => m.name).join(", ") + (passportData.medications.length > 2 ? "..." : "") : "None" },
+                { label: "Blood Type", value: passportData.bloodType ? `${passportData.bloodType}${passportData.rhFactor === "positive" ? "+" : "-"}` : "Unknown", color: "var(--red)" },
+                { label: "Allergies", value: passportData.allergies?.length ? passportData.allergies.slice(0, 2).join(", ") : "None", color: "var(--moderate)" },
+                { label: "Conditions", value: passportData.conditions?.length ? passportData.conditions.slice(0, 2).join(", ") : "None", color: "var(--blue)" },
+                { label: "Medications", value: passportData.medications?.length ? passportData.medications.slice(0, 2).map(m => m.name).join(", ") : "None", color: "var(--purple)" },
               ].map(item => (
-                <div
-                  key={item.label}
-                  className="p-2 rounded-md cursor-pointer hover:bg-white/[0.06] transition-colors"
-                  style={{ background: "rgba(255,255,255,0.04)" }}
-                  onClick={() => handleSend(`Tell me more about how my ${item.label.toLowerCase()} (${item.value}) affects my health.`)}
-                >
-                  <div className="text-muted text-[9px] uppercase font-bold">{item.label}</div>
-                  <div className="text-white text-[11px] mt-0.5 truncate">{item.value}</div>
+                <div key={item.label} className="p-3 rounded-xl bg-white/5 border border-[var(--border)] shadow-sm hover:border-[var(--teal)] transition-all cursor-pointer"
+                  onClick={() => handleSend(`Tell me more about how my ${item.label.toLowerCase()} (${item.value}) affects my health.`)}>
+                  <div className="text-[9px] uppercase font-bold" style={{ color: item.color }}>{item.label}</div>
+                  <div className="text-[var(--text)] text-[11px] mt-1 font-bold truncate">{item.value}</div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* AI Settings */}
-        {showSettings && (
-          <div
-            className="px-5 py-4 shrink-0 space-y-3"
-            style={{ background: "rgba(13,148,136,0.06)", borderBottom: "1px solid rgba(13,148,136,0.15)" }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="font-mono text-[9px] uppercase tracking-widest text-muted">AI Intelligence Settings</div>
-              <a 
-                href="https://console.groq.com/keys" 
-                target="_blank" 
-                rel="noreferrer"
-                className="text-[9px] text-teal-400 hover:underline flex items-center gap-1"
-              >
-                Get Groq API key <X className="h-2 w-2 rotate-45" />
-              </a>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-[10px] text-muted block">Groq API Key</label>
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
-                  <input
-                    type="password"
-                    value={tempApiKey}
-                    onChange={(e) => setTempApiKey(e.target.value)}
-                    placeholder="Enter your Groq API key..."
-                    className="w-full bg-black/40 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-xs text-white outline-none focus:border-teal-500/50"
-                  />
-                </div>
-                <button
-                  onClick={() => {
-                    saveGroqApiKey(tempApiKey);
-                    setShowSettings(false);
-                  }}
-                  className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all flex items-center gap-2"
-                >
-                  <Check className="h-3.5 w-3.5" /> Save Key
-                </button>
-              </div>
-              <p className="text-[9px] text-muted italic">
-                Your key is stored locally on this device and never sent to our servers.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Emergency panel */}
-        {isEmergency && (
-          <div
-            className="px-5 py-4 shrink-0"
-            style={{ background: "rgba(239,68,68,0.1)", borderBottom: "1px solid rgba(239,68,68,0.3)" }}
-          >
-            <div className="font-display font-bold mb-3 flex items-center gap-2" style={{ color: "var(--red)" }}>
-              <AlertTriangle className="h-5 w-5" />
-              🔴 EMERGENCY — Act Now
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <a href="tel:112" className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white" style={{ background: "#ef4444" }}>
-                <Phone className="h-4 w-4" /> CALL 112
-              </a>
-              <a href="tel:108" className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white" style={{ background: "#dc2626" }}>
-                <Phone className="h-4 w-4" /> CALL 108
-              </a>
-            </div>
-            <button onClick={() => setIsEmergency(false)} className="w-full text-xs text-muted hover:text-text transition-colors">
-              Dismiss emergency panel
-            </button>
-          </div>
-        )}
-
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-5 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6 bg-black/20">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className="max-w-[80%] md:max-w-[70%]">
-                {/* Allergy flag */}
+              <div className="max-w-[85%] md:max-w-[75%]">
                 {msg.hasAllergyFlag && (
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg mb-2 text-xs font-bold"
-                    style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", color: "#ef4444" }}
-                  >
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    ⚠️ Allergy / Medication Flag — Read carefully
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-2 text-xs font-bold bg-red-500/10 border border-red-500/20 text-red-500 shadow-sm">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> ⚠️ Allergy / Medication Alert
                   </div>
                 )}
-
-                {/* Bubble */}
                 <div
-                  className="px-4 py-3 text-sm leading-relaxed"
-                  style={
-                    msg.role === "user"
-                      ? {
-                          background: "rgba(255,255,255,0.1)",
-                          color: "#F5F7FA",
-                          borderRadius: "18px 18px 4px 18px",
-                          border: "1px solid rgba(255,255,255,0.1)",
-                        }
-                      : {
-                          background: "rgba(13,148,136,0.15)",
-                          border: "1px solid rgba(13,148,136,0.25)",
-                          color: "#F5F7FA",
-                          borderRadius: "18px 18px 18px 4px",
-                        }
-                  }
+                  className="px-5 py-4 text-sm leading-relaxed shadow-sm"
+                  style={msg.role === "user"
+                    ? { background: "var(--teal)", color: "black", borderRadius: "20px 20px 4px 20px", fontWeight: "600" }
+                    : { background: "var(--surface)", border: "1px solid var(--border)", color: "white", borderRadius: "20px 20px 20px 4px" }}
                   dangerouslySetInnerHTML={{ __html: renderMessage(msg.content) }}
                 />
-
-                {/* Urgency badge */}
                 {msg.urgencyLevel && msg.urgencyLevel !== "INFO" && URGENCY_CONFIG[msg.urgencyLevel] && (
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg mt-2 text-xs font-bold"
-                    style={{
-                      background: URGENCY_CONFIG[msg.urgencyLevel]!.bg,
-                      border: `1px solid ${URGENCY_CONFIG[msg.urgencyLevel]!.border}`,
-                      color: URGENCY_CONFIG[msg.urgencyLevel]!.text,
-                    }}
-                  >
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl mt-2 text-[10px] font-bold uppercase tracking-wider shadow-sm"
+                    style={{ background: URGENCY_CONFIG[msg.urgencyLevel]!.bg, border: `1px solid ${URGENCY_CONFIG[msg.urgencyLevel]!.border}`, color: URGENCY_CONFIG[msg.urgencyLevel]!.text }}>
                     {URGENCY_CONFIG[msg.urgencyLevel]!.icon} {URGENCY_CONFIG[msg.urgencyLevel]!.label}
                   </div>
                 )}
-
-                <div className="text-[9px] text-muted mt-1 px-1">
+                <div className={`text-[9px] mt-1.5 px-1 font-bold uppercase tracking-widest ${msg.role === "user" ? "text-right text-[var(--text)]/30" : "text-left text-[var(--text)]/30"}`}>
                   {msg.timestamp.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
             </div>
           ))}
-
-          {/* Loading */}
           {loading && (
             <div className="flex justify-start">
-              <div
-                className="flex items-center gap-2 px-4 py-3 rounded-2xl text-sm"
-                style={{ background: "rgba(13,148,136,0.1)", border: "1px solid rgba(13,148,136,0.2)" }}
-              >
-                <Loader2 className="h-4 w-4 animate-spin" style={{ color: "var(--teal)" }} />
-                <span className="text-mid text-xs font-mono">Dr. MedShield is analyzing...</span>
+              <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-white/5 border border-[var(--border)] shadow-sm">
+                <Loader2 className="h-4 w-4 animate-spin text-[var(--teal)]" />
+                <span className="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em]">Dr. MedShield Analyzing...</span>
               </div>
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick actions — only on first message */}
+        {/* Quick actions */}
         {messages.length <= 1 && !loading && (
-          <div className="px-4 md:px-8 pb-3 shrink-0">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="px-4 md:px-8 pb-4 bg-black/20">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {QUICK_ACTIONS.map(({ icon: Icon, label, prompt }) => (
-                <button
-                  key={label}
-                  onClick={() => handleSend(prompt)}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium text-left transition-all hover:bg-white/[0.06]"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "var(--mid)" }}
-                >
-                  <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--teal)" }} />
-                  {label}
+                <button key={label} onClick={() => handleSend(prompt)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-[10px] font-bold text-left transition-all bg-white/5 border border-[var(--border)] text-[var(--text)]/60 hover:border-[var(--teal)] hover:text-[var(--text)] hover:shadow-md">
+                  <Icon className="h-4 w-4 shrink-0 text-[var(--teal)]" />
+                  {label.toUpperCase()}
                 </button>
               ))}
             </div>
@@ -429,22 +264,16 @@ function DrMedShieldPage() {
         )}
 
         {/* Input */}
-        <div
-          className="px-4 md:px-8 py-3 shrink-0"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "#0d1829" }}
-        >
-          <div
-            className="flex items-end gap-2 rounded-xl px-3 py-2"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
+        <div className="px-4 md:px-8 py-4 shrink-0 bg-surface border-t border-[var(--border)]">
+          <div className="flex items-end gap-3 rounded-2xl px-4 py-3 bg-white/5 border border-[var(--border)] focus-within:border-[var(--teal)] transition-all">
             <textarea
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Describe your symptoms or ask a medical question..."
+              placeholder="Describe symptoms or ask a medical question..."
               rows={1}
-              className="flex-1 bg-transparent text-sm resize-none outline-none placeholder:text-muted"
+              className="flex-1 bg-transparent text-sm resize-none outline-none placeholder:text-white/30 font-medium"
               style={{ maxHeight: 120, lineHeight: "1.5", color: "white" }}
               onInput={e => {
                 const t = e.target as HTMLTextAreaElement;
@@ -452,17 +281,14 @@ function DrMedShieldPage() {
                 t.style.height = Math.min(t.scrollHeight, 120) + "px";
               }}
             />
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || loading}
-              className="h-8 w-8 rounded-lg grid place-items-center transition-all disabled:opacity-30 shrink-0"
-              style={{ background: input.trim() ? "var(--teal)" : "rgba(255,255,255,0.08)" }}
+            <button onClick={() => handleSend()} disabled={!input.trim() || loading}
+              className="h-10 w-10 rounded-xl grid place-items-center transition-all disabled:opacity-30 shrink-0 bg-[var(--teal)] shadow-lg shadow-[var(--teal)]/20"
             >
-              <Send className="h-4 w-4 text-white" />
+              <Send className="h-5 w-5 text-black" />
             </button>
           </div>
-          <div className="text-center text-[9px] text-muted mt-2 font-mono">
-            Dr. MedShield · Powered by Groq AI · Clinical guidance only — not a replacement for professional medical care
+          <div className="text-center text-[9px] text-white/30 mt-3 font-bold uppercase tracking-widest">
+            Dr. MedShield Intelligence · Powered by Llama 3.3 · Use for guidance only
           </div>
         </div>
       </div>

@@ -62,7 +62,7 @@ export default function Chapter4Conditions() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search conditions..."
-            className="input-base w-full pl-10"
+            className="input-base w-full pl-10 bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </div>
 
@@ -71,7 +71,7 @@ export default function Chapter4Conditions() {
             <button
               key={condition}
               onClick={() => addCondition(condition)}
-              className="panel p-3 text-sm text-left hover:bg-white/[0.03] transition-all"
+              className="panel p-3 text-sm text-left hover:bg-white/[0.05] transition-all bg-white/[0.02]"
             >
               {condition}
             </button>
@@ -84,7 +84,7 @@ export default function Chapter4Conditions() {
             value={customCondition}
             onChange={(e) => setCustomCondition(e.target.value)}
             placeholder="Other condition..."
-            className="input-base flex-1"
+            className="input-base flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && customCondition) {
                 addCondition(customCondition);
@@ -122,7 +122,7 @@ export default function Chapter4Conditions() {
               value={detail.notes || ''}
               onChange={(e) => updateDetail(index, { notes: e.target.value })}
               placeholder="Additional notes..."
-              className="input-base w-full bg-black/20 min-h-[80px] py-2"
+              className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30 min-h-[80px] py-2"
             />
           </div>
         ))}

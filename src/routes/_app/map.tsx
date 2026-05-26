@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OutbreakMap } from "@/components/OutbreakMap";
+import { FacilityMap } from "@/components/FacilityMap";
 import { SEIRChart } from "@/components/SEIRChart";
 import { InterventionPanel } from "@/components/InterventionPanel";
 import { nationalStats } from "@/lib/mockData";
@@ -107,7 +108,7 @@ function MapPage() {
 
   return (
     <div className="relative h-[calc(100vh-52px)] w-full overflow-hidden">
-      {/* Full-screen map */}
+      {/* Map Layer */}
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <OutbreakMap
           height={600}
@@ -118,9 +119,9 @@ function MapPage() {
         />
       </div>
 
-      {/* Left control panel */}
+      {/* Simulation Controls */}
       <div
-        className="absolute top-4 left-4 z-[500] w-[290px] rounded-xl overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
+        className="absolute top-4 left-4 z-[500] w-[290px] rounded-xl overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto animate-in slide-in-from-left duration-300"
         style={{
           background: "rgba(3, 27, 29, 0.85)",
           backdropFilter: "blur(16px)",
@@ -257,8 +258,8 @@ function MapPage() {
             <button
               onClick={resetSimulation}
               style={{
-                padding: "10px 12px", borderRadius: 8, border: "1px solid #e8eaed",
-                background: "white", cursor: "pointer", color: "#5f6368",
+                padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.05)", cursor: "pointer", color: "white",
               }}
               title="Reset"
             >
@@ -271,9 +272,9 @@ function MapPage() {
             onClick={() => setShowInterventions((s) => !s)}
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              padding: "8px 0", borderRadius: 8, border: "1px solid #e8eaed",
-              background: showInterventions ? `${diseaseColor}15` : "white",
-              color: showInterventions ? diseaseColor : "#5f6368",
+              padding: "8px 0", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)",
+              background: showInterventions ? `${diseaseColor}15` : "rgba(255,255,255,0.05)",
+              color: showInterventions ? diseaseColor : "white",
               fontWeight: 600, fontSize: 12, fontFamily: "system-ui", cursor: "pointer",
             }}
           >
@@ -282,7 +283,7 @@ function MapPage() {
           </button>
 
           {showInterventions && (
-            <div style={{ borderTop: "1px solid #e8eaed", paddingTop: 12 }}>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12 }}>
               <InterventionPanel
                 interventions={interventions}
                 onToggle={toggleIntervention}
@@ -296,52 +297,54 @@ function MapPage() {
 
       {/* Right SEIR panel */}
       <div
-        className="absolute top-4 right-4 z-[500] w-[260px] rounded-xl hidden lg:block"
+        className="absolute top-4 right-4 z-[500] w-[260px] rounded-xl hidden lg:block animate-in slide-in-from-right duration-300"
         style={{
-          background: "rgba(255,255,255,0.97)",
-          backdropFilter: "blur(12px)",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
-          border: "1px solid rgba(0,0,0,0.08)",
+          background: "rgba(3, 27, 29, 0.85)",
+          backdropFilter: "blur(16px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          border: "1px solid rgba(255,255,255,0.1)",
           padding: "14px 16px",
+          color: "white"
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: 13, color: "#202124", marginBottom: 10, fontFamily: "system-ui" }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: "white", marginBottom: 10, fontFamily: "var(--font-display)" }}>
           SEIR Projection — {disease}
         </div>
         <SEIRChart r0={impact.effectiveR0} days={30} height={140} />
-        <Link to="/intelligence" style={{ fontSize: 11, color: diseaseColor, textDecoration: "none", marginTop: 8, display: "inline-block", fontFamily: "system-ui" }}>
+        <Link to="/intelligence" style={{ fontSize: 11, color: diseaseColor, textDecoration: "none", marginTop: 8, display: "inline-block", fontFamily: "var(--font-sans)" }}>
           Open Intelligence Hub →
         </Link>
       </div>
 
       {/* Bottom stats bar */}
       <div
-        className="absolute bottom-4 left-4 right-4 z-[500] rounded-xl grid grid-cols-2 md:grid-cols-5 gap-0"
+        className="absolute bottom-4 left-4 right-4 z-[500] rounded-xl grid grid-cols-2 md:grid-cols-5 gap-0 animate-in slide-in-from-bottom duration-300"
         style={{
-          background: "rgba(255,255,255,0.97)",
-          backdropFilter: "blur(12px)",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
-          border: "1px solid rgba(0,0,0,0.08)",
+          background: "rgba(3, 27, 29, 0.85)",
+          backdropFilter: "blur(16px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          border: "1px solid rgba(255,255,255,0.1)",
           overflow: "hidden",
+          color: "white"
         }}
       >
-        {[
-          { label: "Simulated Active Cases", value: fmtNum(simActiveCases), color: diseaseColor },
-          { label: "Baseline (National)", value: fmtNum(nationalStats.activeCases), color: "#5f6368" },
-          { label: "Districts in Red Zone", value: String(simCities.filter((c) => c.status === "Critical").length), color: "#ef4444" },
-          { label: "Effective R₀", value: String(impact.effectiveR0), color: impact.effectiveR0 > 1 ? "#ef4444" : "#188038" },
-          { label: "Intervention Impact", value: `−${impact.reductionPct}%`, color: "#188038" },
-        ].map((s, i) => (
-          <div key={s.label} style={{ padding: "12px 16px", borderRight: i < 4 ? "1px solid #e8eaed" : "none" }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: "#5f6368", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "system-ui", marginBottom: 4 }}>
-              {s.label}
+          {[
+            { label: "Simulated Active Cases", value: fmtNum(simActiveCases), color: diseaseColor },
+            { label: "Baseline (National)", value: fmtNum(nationalStats.activeCases), color: "rgba(255,255,255,0.6)" },
+            { label: "Districts in Red Zone", value: String(simCities.filter((c) => c.status === "Critical").length), color: "#ef4444" },
+            { label: "Effective R₀", value: String(impact.effectiveR0), color: impact.effectiveR0 > 1 ? "#ef4444" : "#00FF88" },
+            { label: "Intervention Impact", value: `−${impact.reductionPct}%`, color: "#00FF88" },
+          ].map((s, i) => (
+            <div key={s.label} style={{ padding: "12px 16px", borderRight: i < 4 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "var(--font-sans)", marginBottom: 4 }}>
+                {s.label}
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: s.color, fontFamily: "var(--font-mono)", lineHeight: 1 }}>
+                {s.value}
+              </div>
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: s.color, fontFamily: "monospace", lineHeight: 1 }}>
-              {s.value}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
     </div>
   );
 }

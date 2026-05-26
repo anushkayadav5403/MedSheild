@@ -62,7 +62,7 @@ export default function Chapter2Blood() {
             value={passportData.rhFactor || ''}
             onChange={(e) => updatePassportData({ rhFactor: e.target.value })}
             placeholder="e.g., Positive, Negative"
-            className="input-base w-full"
+            className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </div>
 
@@ -73,7 +73,7 @@ export default function Chapter2Blood() {
             value={passportData.rareAntigens || ''}
             onChange={(e) => updatePassportData({ rareAntigens: e.target.value })}
             placeholder="e.g., Kell, Duffy"
-            className="input-base w-full"
+            className="input-base w-full bg-white/5 border-white/10 text-white placeholder:text-white/30"
           />
         </div>
       </div>
