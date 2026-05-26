@@ -111,17 +111,17 @@ function SymptomsPage() {
           <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-teal font-bold mb-1">
             Clinical Diagnostic Suite
           </div>
-          <h1 className="font-display font-extrabold text-3xl md:text-4xl tracking-tight text-white">Symptom Intelligence</h1>
-          <p className="text-sm text-white/50 mt-2 max-w-xl font-medium">
+          <h1 className="font-display font-extrabold text-3xl md:text-4xl tracking-tight text-[#031B1D]">Symptom Intelligence</h1>
+          <p className="text-sm text-[#031B1D]/50 mt-2 max-w-xl font-medium">
             AI-driven epidemiological assessment. Analyze individual health markers against real-time local variant patterns and transmission clusters.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right hidden md:block">
-            <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Protocol Version</div>
-            <div className="text-xs font-mono font-bold text-white">v4.2.0-BIO</div>
+            <div className="text-[10px] font-bold text-[#031B1D]/40 uppercase tracking-widest">Protocol Version</div>
+            <div className="text-xs font-mono font-bold text-[#031B1D]">v4.2.0-BIO</div>
           </div>
-          <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 grid place-items-center shadow-xl">
+          <div className="h-12 w-12 rounded-2xl bg-[#031B1D] grid place-items-center shadow-xl">
             <Stethoscope className="h-6 w-6 text-teal" />
           </div>
         </div>
