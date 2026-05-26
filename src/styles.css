@@ -1,0 +1,352 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap");
+@import "leaflet/dist/leaflet.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-display: "Syne", system-ui, sans-serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-foreground: var(--text);
+  --color-card-hover: var(--card-hover);
+  --color-border: var(--border);
+  --color-border-bright: var(--border-bright);
+  --color-input: var(--input-bg);
+  --color-input-bg: var(--input-bg);
+  --color-text: var(--text);
+  --color-mid: var(--mid);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--mid);
+  --color-primary: var(--teal);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--surface);
+  --color-secondary-foreground: var(--text);
+  --color-accent: var(--teal);
+  --color-accent-foreground: #ffffff;
+  --color-destructive: var(--red);
+  --color-destructive-foreground: #ffffff;
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--text);
+  --color-ring: var(--teal);
+  --color-red: var(--red);
+  --color-red-dim: var(--red-dim);
+  --color-red-glow: var(--red-glow);
+  --color-mild: var(--mild);
+  --color-mild-bg: var(--mild-bg);
+  --color-moderate: var(--moderate);
+  --color-moderate-bg: var(--moderate-bg);
+  --color-severe: var(--severe);
+  --color-severe-bg: var(--severe-bg);
+  --color-teal: var(--teal);
+  --color-teal-dim: var(--teal-dim);
+  --color-blue: var(--blue);
+  --color-blue-dim: var(--blue-dim);
+  --color-purple: var(--purple);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Animation Timings */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-soft: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root {
+  --bg: #F5F3EF;
+  --surface: #031B1D;
+  --card: #042A2E;
+  --card-hover: #05343A;
+  --sidebar-bg: #031B1D;
+  --border: rgba(3, 27, 29, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.1);
+  --input-bg: #FFFFFF;
+  --text: #031B1D;
+  --panel-text: #F5F7FA;
+  --mid: rgba(255, 255, 255, 0.85);
+  --muted: rgba(255, 255, 255, 0.5);
+  --dark-muted: rgba(255, 255, 255, 0.25);
+  
+  /* Reference Colors */
+  --neon-cyan: #00FFD1;
+  --neon-green: #00FF95;
+  --med-blue: #00C2FF;
+  --alert-red: #FF3B3B;
+  --warn-orange: #FF9F1C;
+  --crit-orange: #FF6B00;
+  --success-green: #00FF88;
+  
+  /* Legacy Mapping */
+  --red: var(--alert-red);
+  --red-dim: rgba(255, 59, 59, 0.15);
+  --teal: var(--neon-cyan);
+  --teal-dim: rgba(0, 255, 209, 0.15);
+  --blue: var(--med-blue);
+  --blue-dim: rgba(0, 194, 255, 0.15);
+  --mild: var(--success-green);
+  --mild-bg: rgba(0, 255, 136, 0.15);
+  --moderate: var(--warn-orange);
+  --moderate-bg: rgba(255, 159, 28, 0.15);
+  --severe: var(--crit-orange);
+  --severe-bg: rgba(255, 107, 0, 0.15);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html,
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'SF Pro Display', 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .panel {
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    color: var(--panel-text);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.4s var(--ease-out-expo), box-shadow 0.4s var(--ease-out-expo), border-color 0.4s var(--ease-out-expo);
+  }
+  
+  .panel:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.8s var(--ease-out-expo) forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.8s var(--ease-out-expo) forwards;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2.5s infinite;
+  }
+
+  .animate-pulse-fast {
+    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.5s var(--ease-out-expo) forwards;
+  }
+
+  .animate-progress-fill {
+    animation: progressFill 1.5s var(--ease-out-expo) forwards;
+  }
+
+  .animate-graph-reveal {
+    animation: graphReveal 1.2s var(--ease-out-expo) forwards;
+  }
+
+  @keyframes progressFill {
+    from { width: 0; }
+  }
+
+  @keyframes graphReveal {
+    from { 
+      opacity: 0;
+      clip-path: inset(0 100% 0 0);
+    }
+    to { 
+      opacity: 1;
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes scaleIn {
+    from { 
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
+  .stagger-6 { animation-delay: 0.6s; }
+  .stagger-7 { animation-delay: 0.7s; }
+  .stagger-8 { animation-delay: 0.8s; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .glass-sidebar {
+    background: var(--sidebar-bg);
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .input-base {
+    background-color: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: var(--font-sans);
+    color: var(--text);
+    outline: none;
+    transition: border-color 150ms;
+  }
+  .input-base:focus {
+    border-color: var(--teal);
+  }
+  .btn-primary {
+    background-color: var(--teal);
+    color: #00131a;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 700;
+    transition: filter 150ms;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border-bright);
+    color: var(--mid);
+    border-radius: 8px;
+    padding: 10px 20px;
+    transition:
+      color 150ms,
+      border-color 150ms;
+  }
+  .btn-ghost:hover {
+    color: var(--text);
+    border-color: var(--teal);
+  }
+  .btn-danger {
+    background-color: var(--red);
+    color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 700;
+  }
+
+  .pulse-ring::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    border: 2px solid currentColor;
+    animation: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .scan-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+  .scan-sweep::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--teal), transparent);
+    box-shadow: 0 0 8px var(--teal);
+    animation: scan-sweep 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+@keyframes scan-sweep {
+  0% {
+    top: 0;
+  }
+  100% {
+    top: 100%;
+  }
+}
+@keyframes ping-soft {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Leaflet dark overrides */
+.leaflet-container {
+  background: #050a14;
+  font-family: var(--font-sans);
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+  font-family: var(--font-sans);
+}
+.leaflet-control-attribution {
+  background: rgba(13, 24, 41, 0.7) !important;
+  color: var(--muted) !important;
+}
+.leaflet-control-attribution a {
+  color: var(--mid) !important;
+}
